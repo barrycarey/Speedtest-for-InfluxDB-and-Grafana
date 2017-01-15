@@ -75,6 +75,6 @@ atribe/speedtest-for-influxdb-and-grafana
 ```
  2. The docker-compose option
  ```bash
- curl -O https://raw.githubusercontent.com/barrycarey/Speedtest-for-InfluxDB-and-Grafana/blob/master/ddocker-compose.yml docker-compose.yml
+ curl -O https://raw.githubusercontent.com/barrycarey/Speedtest-for-InfluxDB-and-Grafana/blob/master/docker-compose.yml docker-compose.yml
  docker-compose up -d
  ```
