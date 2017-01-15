@@ -3,7 +3,8 @@ MAINTAINER Allan Tribe <atribe13@gmail.com>
 
 VOLUME /src
 ADD . /src
+WORKDIR /src
 
-RUN pip install -r /src/requirements.txt
+RUN pip install -r requirements.txt
 
 CMD ["python", "/src/InfluxdbSpeedtest.py"]
