@@ -1,7 +1,7 @@
 FROM python:3.3-slim
 MAINTAINER Allan Tribe <atribe13@gmail.com>
 
-VOLUME /src
+VOLUME /src/config.ini
 ADD . /src
 WORKDIR /src
 
