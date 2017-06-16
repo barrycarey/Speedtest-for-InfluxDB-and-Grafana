@@ -43,3 +43,38 @@ Python 3+
 You will need the influxdb library installed to use this - [Found Here](https://github.com/influxdata/influxdb-python)
 You will need the speedtest-cli library installed to use this - [Found Here](https://github.com/sivel/speedtest-cli)
 
+## Docker Setup
+
+1. Install [Docker](https://www.docker.com/)
+
+2. Make a directory to hold the config.ini file. Navigate to that directory and download the sample config.ini in this repo.
+```bash
+mkdir speedtest
+curl -O https://raw.githubusercontent.com/barrycarey/Speedtest-for-InfluxDB-and-Grafana/blob/master/config.ini speedtest/config.ini
+cd speedtest
+```
+
+3. Modify the config file with your influxdb settings.
+```bash
+nano config.ini
+```
+Modify the 'Address =' line include the ip or hostname of your influxdb instance.
+Example:
+```bash
+Address = 10.13.14.200
+```
+
+4. Run the container, pointing to the directory with the config file. This should now pull the image from Docker hub. You can do this by either running docker run or by using docker-compose.
+ 1. The docker run option.
+```bash
+docker run -d \
+--name="speedtest" \
+-v config.ini:/src/config.ini \
+--restart="always" \
+atribe/speedtest-for-influxdb-and-grafana
+```
+ 2. The docker-compose option
+ ```bash
+ curl -O https://raw.githubusercontent.com/barrycarey/Speedtest-for-InfluxDB-and-Grafana/blob/master/docker-compose.yml docker-compose.yml
+ docker-compose up -d
+ ```
