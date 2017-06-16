@@ -60,6 +60,8 @@ class InfluxdbSpeedtest():
             verify_ssl=self.config.influx_verify_ssl
         )
 
+        self.speedtest = None
+        self.results = None
         self.setup_speedtest()
 
     def setup_speedtest(self):
