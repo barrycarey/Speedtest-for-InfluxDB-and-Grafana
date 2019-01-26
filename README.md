@@ -5,6 +5,11 @@
 
 This tool is a wrapper for speedtest-cli which allows you to run periodic speedtets and save the results to Influxdb 
 
+## Command Line Args
+--config whatever.ini - Use a different ini file
+
+--singlerun - Run once and exit
+
 ## Configuration within config.ini
 
 #### GENERAL

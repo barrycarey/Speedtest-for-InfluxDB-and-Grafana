@@ -46,10 +46,11 @@ class configManager():
 
 class InfluxdbSpeedtest():
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, single_run=False):
 
         self.config = configManager(config=config)
         self.output = self.config.output
+        self.single_run = single_run
         self.influx_client = InfluxDBClient(
             self.config.influx_address,
             self.config.influx_port,
@@ -62,7 +63,6 @@ class InfluxdbSpeedtest():
 
         self.speedtest = None
         self.results = None
-        self.setup_speedtest()
 
     def setup_speedtest(self):
 
@@ -81,7 +81,7 @@ class InfluxdbSpeedtest():
             print('ERROR: No matched servers: {}'.format(self.config.test_server[0]))
             sys.exit(1)
         except speedtest.ServersRetrievalError:
-            print('ERROR: Cannot retrieve speedtest server list')
+            print('ERROR: Cannot retrieve speedtest.net server list')
             sys.exit(1)
         except speedtest.InvalidServerIDType:
             print('{} is an invalid server type, must be int'.format(self.config.test_server[0]))
@@ -119,11 +119,13 @@ class InfluxdbSpeedtest():
     def run(self):
 
         while True:
-
+            self.setup_speedtest()
             self.speedtest.download()
             self.speedtest.upload()
 
             self.send_results()
+            if self.single_run:
+                return
 
             time.sleep(self.config.delay)
 
@@ -160,8 +162,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="A tool to send Plex statistics to InfluxDB")
     parser.add_argument('--config', default='config.ini', dest='config', help='Specify a custom location for the config file')
+    parser.add_argument('--singlerun', action='store_true', help='Only runs through once, does not keep monitoring')
     args = parser.parse_args()
-    collector = InfluxdbSpeedtest(config=args.config)
+    collector = InfluxdbSpeedtest(config=args.config, single_run=args.singlerun)
     collector.run()
 
 
