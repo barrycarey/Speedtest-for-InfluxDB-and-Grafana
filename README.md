@@ -5,18 +5,12 @@
 
 This tool is a wrapper for speedtest-cli which allows you to run periodic speedtets and save the results to Influxdb 
 
-## Command Line Args
---config whatever.ini - Use a different ini file
-
---singlerun - Run once and exit
-
 ## Configuration within config.ini
 
 #### GENERAL
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Delay          |Delay between runs                                                                                                  |
-|Output         |Write console output while tool is running                                                                          |
 #### INFLUXDB
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
@@ -28,7 +22,7 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 #### SPEEDTEST
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Server         |Server ID of speedtest.net server.  Leave blank for auto                                                            |
+|Server         |Comma sperated list of servers.  Leave blank for auto                                                            |
 
 
 
@@ -37,8 +31,7 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 Before the first use run pip3 install -r requirements.txt
 
 Enter your desired information in config.ini and run InfluxdbSpeedtest.py
-
-Optionally, you can specify the --config argument to load the config file from a different location.  
+  
 
 
 ***Requirements***
