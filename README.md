@@ -23,16 +23,25 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Server         |Comma sperated list of servers.  Leave blank for auto                                                            |
+#### LOGGING
+|Key            |Description                                                                                                         |
+|:--------------|:-------------------------------------------------------------------------------------------------------------------|
+|Level          |Set how verbose the console output is                                                           |
 
 
 
-**Usage**
+## Usage
 
 Before the first use run pip3 install -r requirements.txt
 
-Enter your desired information in config.ini and run InfluxdbSpeedtest.py
-  
+Enter your desired information in config.ini 
 
+Run influxspeedtest.py
+
+**Custom Config File Name**
+
+If you wish to use a config file by a different name set an ENV Variable called influxspeedtest.  The value you set will be the config file that's used. 
+  
 
 ***Requirements***
 
