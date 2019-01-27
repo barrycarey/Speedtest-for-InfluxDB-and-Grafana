@@ -1,4 +1,4 @@
-FROM python:3.3-slim
+FROM python:alpine
 MAINTAINER Allan Tribe <atribe13@gmail.com>
 
 VOLUME /src/
