@@ -71,17 +71,7 @@ class InfluxdbSpeedtest():
             log.critical('Failed to get speedtest.net configuration.  Aborting')
             sys.exit(1)
 
-        try:
-            self.speedtest.get_servers(server)
-        except speedtest.NoMatchedServers:
-            log.error('No matched servers: %s', server)
-            return
-        except speedtest.ServersRetrievalError:
-            log.critical('Cannot retrieve speedtest.net server list. Aborting')
-            sys.exit(1)
-        except speedtest.InvalidServerIDType:
-            log.error('%s is an invalid server type, must be int', server)
-            return
+        self.speedtest.get_servers(server)
 
         log.debug('Picking the closest server')
 
@@ -120,7 +110,19 @@ class InfluxdbSpeedtest():
         :param server: Server to test against
         """
         log.info('Starting Speed Test For Server %s', server)
-        self.setup_speedtest(server)
+
+        try:
+            self.setup_speedtest(server)
+        except speedtest.NoMatchedServers:
+            log.error('No matched servers: %s', server)
+            return
+        except speedtest.ServersRetrievalError:
+            log.critical('Cannot retrieve speedtest.net server list. Aborting')
+            return
+        except speedtest.InvalidServerIDType:
+            log.error('%s is an invalid server type, must be int', server)
+            return
+
         log.info('Starting download test')
         self.speedtest.download()
         log.info('Starting upload test')
