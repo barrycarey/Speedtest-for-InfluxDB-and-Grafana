@@ -4,7 +4,7 @@ import time
 import speedtest
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
-from requests import ConnectTimeout
+from requests import ConnectTimeout, ConnectionError
 
 from influxspeedtest.common import log
 from influxspeedtest.config import config
@@ -40,11 +40,13 @@ class InfluxdbSpeedtest():
             log.debug('Testing connection to InfluxDb using provided credentials')
             influx.get_list_users()  # TODO - Find better way to test connection and permissions
             log.debug('Successful connection to InfluxDb')
-        except (ConnectTimeout, InfluxDBClientError) as e:
+        except (ConnectTimeout, InfluxDBClientError, ConnectionError) as e:
             if isinstance(e, ConnectTimeout):
                 log.critical('Unable to connect to InfluxDB at the provided address (%s)', config.influx_address)
             elif e.code == 401:
                 log.critical('Unable to connect to InfluxDB with provided credentials')
+            else:
+                log.critical('Failed to connect to InfluxDB for unknown reason')
 
             sys.exit(1)
 
