@@ -99,7 +99,9 @@ class InfluxdbSpeedtest():
                     'ping': result_dict['server']['latency']
                 },
                 'tags': {
-                    'server': result_dict['server']['id']
+                    'server': result_dict['server']['id'],
+                    'server_name': result_dict['server']['name'],
+                    'server_country': result_dict['server']['country']
                 }
             }
         ]
