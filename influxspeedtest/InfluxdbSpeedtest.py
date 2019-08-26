@@ -96,7 +96,9 @@ class InfluxdbSpeedtest():
                 'fields': {
                     'download': result_dict['download'],
                     'upload': result_dict['upload'],
-                    'ping': result_dict['server']['latency']
+                    'ping': result_dict['server']['latency'],
+                    'server': result_dict['server']['id'],
+                    'server_name': result_dict['server']['name']
                 },
                 'tags': {
                     'server': result_dict['server']['id'],
