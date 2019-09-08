@@ -1,7 +1,7 @@
 version: '2'
 services:
   speedtest:
-    image: atribe/speedtest-for-influxdb-and-grafana
+    image: barrycarey/speedtest-for-influxdb-and-grafana
     container_name: speedtest
     volumes:
       - ./config.ini:/src/config.ini

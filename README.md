@@ -78,7 +78,7 @@ docker run -d \
 --name="speedtest" \
 -v config.ini:/src/config.ini \
 --restart="always" \
-atribe/speedtest-for-influxdb-and-grafana
+barrycarey/speedtest-for-influxdb-and-grafana
 ```
  2. The docker-compose option
  ```bash
