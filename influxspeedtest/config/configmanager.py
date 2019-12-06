@@ -26,15 +26,29 @@ class ConfigManager():
 
         # InfluxDB
         self.influx_address = self.config['INFLUXDB']['Address']
-        self.influx_port = self.config['INFLUXDB'].getint('Port', fallback=8086)
-        self.influx_database = self.config['INFLUXDB'].get('Database', fallback='speedtests')
+        self.influx_port = self.config['INFLUXDB'].getint(
+            'Port', fallback=8086)
+        self.influx_database = self.config['INFLUXDB'].get(
+            'Database', fallback='speedtests')
         self.influx_user = self.config['INFLUXDB'].get('Username', fallback='')
-        self.influx_password = self.config['INFLUXDB'].get('Password', fallback='')
-        self.influx_ssl = self.config['INFLUXDB'].getboolean('SSL', fallback=False)
-        self.influx_verify_ssl = self.config['INFLUXDB'].getboolean('Verify_SSL', fallback=True)
+        self.influx_password = self.config['INFLUXDB'].get(
+            'Password', fallback='')
+        self.influx_ssl = self.config['INFLUXDB'].getboolean(
+            'SSL', fallback=False)
+        self.influx_verify_ssl = self.config['INFLUXDB'].getboolean(
+            'Verify_SSL', fallback=True)
+
+        # MQTT
+        self.mqtt_hostname = self.config['MQTT']['Hostname']
+        self.mqtt_port = self.config['MQTT'].getint('Port', fallback=1883)
+        self.mqtt_user = self.config['MQTT'].get('Username', fallback='')
+        self.mqtt_password = self.config['MQTT'].get('Password', fallback='')
+        self.mqtt_topicprefix = self.config['MQTT'].get(
+            'Topic_Prefix', fallback='speedtest')
 
         # Logging
-        self.logging_level = self.config['LOGGING'].get('Level', fallback='debug')
+        self.logging_level = self.config['LOGGING'].get(
+            'Level', fallback='debug')
         self.logging_level = self.logging_level.upper()
 
         # Speedtest

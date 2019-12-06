@@ -2,3 +2,4 @@ influxdb
 speedtest-cli
 requests
 configparser
+paho-mqtt

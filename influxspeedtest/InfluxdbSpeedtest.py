@@ -1,13 +1,28 @@
 import sys
 import time
+import json
 
 import speedtest
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from requests import ConnectTimeout, ConnectionError
+import paho.mqtt.publish as publish
+
 
 from influxspeedtest.common import log
 from influxspeedtest.config import config
+
+
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code "+str(rc))
+
+    # Subscribing in on_connect() means that if we lose the connection and
+    # reconnect then subscriptions will be renewed.
+    client.subscribe("$SYS/#")
+
+
+def on_message(client, userdata, msg):
+    print(msg.topic+" "+str(msg.payload))
 
 
 class InfluxdbSpeedtest():
@@ -15,8 +30,21 @@ class InfluxdbSpeedtest():
     def __init__(self):
 
         self.influx_client = self._get_influx_connection()
+        self._test_mqtt_connection()
         self.speedtest = None
         self.results = None
+
+    def _test_mqtt_connection(self):
+        """
+        Create a MQTT connection and test to make sure it works.
+        :return:
+        """
+        try:
+            publish.single(config.mqtt_topicprefix + "/test", "this is a test", hostname=config.mqtt_hostname, port=config.mqtt_port,
+                           auth={"username": config.mqtt_user, "password": config.mqtt_password})
+            log.info("published test to {}/test".format(config.mqtt_topicprefix))
+        except Exception as e:
+            log.critical(e)
 
     def _get_influx_connection(self):
         """
@@ -42,11 +70,15 @@ class InfluxdbSpeedtest():
             log.debug('Successful connection to InfluxDb')
         except (ConnectTimeout, InfluxDBClientError, ConnectionError) as e:
             if isinstance(e, ConnectTimeout):
-                log.critical('Unable to connect to InfluxDB at the provided address (%s)', config.influx_address)
-            elif e.code == 401:
-                log.critical('Unable to connect to InfluxDB with provided credentials')
+                log.critical(
+                    'Unable to connect to InfluxDB at the provided address (%s)', config.influx_address)
+            # elif e.code == 401:
+            #     log.critical(
+            #         'Unable to connect to InfluxDB with provided credentials')
             else:
-                log.critical('Failed to connect to InfluxDB for unknown reason')
+                log.critical(
+                    'Failed to connect to InfluxDB for unknown reason')
+                log.critical(e)
 
             sys.exit(1)
 
@@ -65,12 +97,13 @@ class InfluxdbSpeedtest():
         if server is None:
             server = []
         else:
-            server = server.split() # Single server to list
+            server = server.split()  # Single server to list
 
         try:
             self.speedtest = speedtest.Speedtest()
         except speedtest.ConfigRetrievalError:
-            log.critical('Failed to get speedtest.net configuration.  Aborting')
+            log.critical(
+                'Failed to get speedtest.net configuration.  Aborting')
             sys.exit(1)
 
         self.speedtest.get_servers(server)
@@ -79,7 +112,8 @@ class InfluxdbSpeedtest():
 
         self.speedtest.get_best_server()
 
-        log.info('Selected Server %s in %s', self.speedtest.best['id'], self.speedtest.best['name'])
+        log.info('Selected Server %s in %s',
+                 self.speedtest.best['id'], self.speedtest.best['name'])
 
         self.results = self.speedtest.results
 
@@ -107,6 +141,7 @@ class InfluxdbSpeedtest():
         ]
 
         self.write_influx_data(input_points)
+        self.write_mqtt_data(input_points)
 
     def run_speed_test(self, server=None):
         """
@@ -140,8 +175,6 @@ class InfluxdbSpeedtest():
                  results['server']['latency']
                  )
 
-
-
     def write_influx_data(self, json_data):
         """
         Writes the provided JSON to the database
@@ -154,7 +187,8 @@ class InfluxdbSpeedtest():
             self.influx_client.write_points(json_data)
         except (InfluxDBClientError, ConnectionError, InfluxDBServerError) as e:
             if hasattr(e, 'code') and e.code == 404:
-                log.error('Database %s Does Not Exist.  Attempting To Create', config.influx_database)
+                log.error(
+                    'Database %s Does Not Exist.  Attempting To Create', config.influx_database)
                 self.influx_client.create_database(config.influx_database)
                 self.influx_client.write_points(json_data)
                 return
@@ -163,6 +197,22 @@ class InfluxdbSpeedtest():
             print(e)
 
         log.debug('Data written to InfluxDB')
+
+    def write_mqtt_data(self, json_data):
+        """
+        Writes the provided JSON to the MQTT endpoint specified
+        :param json_data
+        :return: None
+        """
+        log.debug(json_data)
+        try:
+            for result in json_data:
+                publish.single(config.mqtt_topicprefix + "/results", json.dumps(result), hostname=config.mqtt_hostname, port=config.mqtt_port,
+                               auth={"username": config.mqtt_user, "password": config.mqtt_password})
+            log.info(
+                "published results to {}/results".format(config.mqtt_topicprefix))
+        except Exception as e:
+            log.error(e)
 
     def run(self):
 
