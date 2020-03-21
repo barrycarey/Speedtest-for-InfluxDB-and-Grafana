@@ -1,4 +1,4 @@
-FROM python:alpine
+FROM python:3.7-alpine
 MAINTAINER Barry Carey <mcarey66@gmail.com>
 
 VOLUME /src/
