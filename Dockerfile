@@ -1,8 +1,7 @@
 FROM python:alpine
-MAINTAINER Barry Carey <mcarey66@gmail.com>
 
 VOLUME /src/
-COPY influxspeedtest.py requirements.txt config.ini /src/
+COPY influxspeedtest.py requirements.txt /src/
 ADD influxspeedtest /src/influxspeedtest
 WORKDIR /src
 

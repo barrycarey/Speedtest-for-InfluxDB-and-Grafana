@@ -1,0 +1,31 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: speedtest-fetcher
+spec:
+  schedule: "30 * * * *"
+  successfulJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: speedtest
+              image: patrickjmcd/speedtest
+              env:
+                - name: INFLUXDB_ADDRESS
+                  valueFrom:
+                    secretKeyRef:
+                      name: influxdb-secret
+                      key: influxdb-server
+                - name: INFLUXDB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: influxdb-secret
+                      key: influxdb-username
+                - name: INFLUXDB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: influxdb-secret
+                      key: influxdb-password
+          restartPolicy: OnFailure

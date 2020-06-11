@@ -8,9 +8,11 @@ from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from requests import ConnectTimeout, ConnectionError
 import paho.mqtt.publish as publish
 
+from influxspeedtest.common.configmanager import ConfigManager
+from influxspeedtest.common.log import log_setup
 
-from influxspeedtest.common import log
-from influxspeedtest.config import config
+config = ConfigManager("config.ini")
+log = log_setup(config.logging_level)
 
 
 def on_connect(client, userdata, flags, rc):
@@ -29,8 +31,12 @@ class InfluxdbSpeedtest():
 
     def __init__(self):
 
-        self.influx_client = self._get_influx_connection()
-        self._test_mqtt_connection()
+        if config.influx_address:
+            print("Influx address {}".format(config.influx_address))
+            self.influx_client = self._get_influx_connection()
+        if config.mqtt_hostname:
+            print("MQTTT Hostname {}".format(config.mqtt_hostname))
+            self._test_mqtt_connection()
         self.speedtest = None
         self.results = None
 
@@ -72,9 +78,9 @@ class InfluxdbSpeedtest():
             if isinstance(e, ConnectTimeout):
                 log.critical(
                     'Unable to connect to InfluxDB at the provided address (%s)', config.influx_address)
-            # elif e.code == 401:
-            #     log.critical(
-            #         'Unable to connect to InfluxDB with provided credentials')
+            elif e.code == 401:
+                log.critical(
+                    'Unable to connect to InfluxDB with provided credentials')
             else:
                 log.critical(
                     'Failed to connect to InfluxDB for unknown reason')
@@ -139,9 +145,10 @@ class InfluxdbSpeedtest():
                 }
             }
         ]
-
-        self.write_influx_data(input_points)
-        self.write_mqtt_data(input_points)
+        if config.influx_address:
+            self.write_influx_data(input_points)
+        if config.mqtt_hostname:
+            self.write_mqtt_data(input_points)
 
     def run_speed_test(self, server=None):
         """
@@ -208,19 +215,15 @@ class InfluxdbSpeedtest():
         try:
             for result in json_data:
                 publish.single(config.mqtt_topicprefix + "/results", json.dumps(result), hostname=config.mqtt_hostname, port=config.mqtt_port,
-                               auth={"username": config.mqtt_user, "password": config.mqtt_password})
+                               auth={"username": config.mqtt_user, "password": config.mqtt_password}, retain=True)
             log.info(
                 "published results to {}/results".format(config.mqtt_topicprefix))
         except Exception as e:
             log.error(e)
 
     def run(self):
-
-        while True:
-            if not config.servers:
-                self.run_speed_test()
-            else:
-                for server in config.servers:
-                    self.run_speed_test(server)
-            log.info('Waiting %s seconds until next test', config.delay)
-            time.sleep(config.delay)
+        if not config.servers:
+            self.run_speed_test()
+        else:
+            for server in config.servers:
+                self.run_speed_test(server)
