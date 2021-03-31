@@ -95,20 +95,29 @@ class InfluxdbSpeedtest():
                 'measurement': 'speed_test_results',
                 'fields': {
                     'download': result_dict['download'],
+                    'bytes_received': result_dict['bytes_received'],
                     'upload': result_dict['upload'],
-                    'ping': result_dict['server']['latency']
+                    'bytes_sent': result_dict['bytes_sent'],
+                    'ping': result_dict['server']['latency'],
+                    'isp': result_dict['client']['isp'],
+                    'server': result_dict['server']['id'],
+                    'server_name': result_dict['server']['name'],
+                    'server_country': result_dict['server']['country'],
+                    'server_sponsor': result_dict['server']['sponsor'],
+                    'result_url': result_dict['share']
                 },
                 'tags': {
                     'server': result_dict['server']['id'],
                     'server_name': result_dict['server']['name'],
-                    'server_country': result_dict['server']['country']
+                    'server_country': result_dict['server']['country'],
+                    'isp': result_dict['client']['isp']
                 }
             }
         ]
 
         self.write_influx_data(input_points)
 
-    def run_speed_test(self, server=None):
+    def run_speed_test(self, server=None, share=False):
         """
         Performs the speed test with the provided server
         :param server: Server to test against
@@ -131,13 +140,16 @@ class InfluxdbSpeedtest():
         self.speedtest.download()
         log.info('Starting upload test')
         self.speedtest.upload()
+        if(share):
+            self.results.share()
         self.send_results()
 
         results = self.results.dict()
-        log.info('Download: %sMbps - Upload: %sMbps - Latency: %sms',
+        log.info('Download: %sMbps - Upload: %sMbps - Latency: %sms - Share: %s',
                  round(results['download'] / 1000000, 2),
                  round(results['upload'] / 1000000, 2),
-                 results['server']['latency']
+                 results['server']['latency'],
+                 results['share']
                  )
 
 
@@ -168,9 +180,9 @@ class InfluxdbSpeedtest():
 
         while True:
             if not config.servers:
-                self.run_speed_test()
+                self.run_speed_test(share=config.share)
             else:
                 for server in config.servers:
-                    self.run_speed_test(server)
+                    self.run_speed_test(server, config.share)
             log.info('Waiting %s seconds until next test', config.delay)
             time.sleep(config.delay)
