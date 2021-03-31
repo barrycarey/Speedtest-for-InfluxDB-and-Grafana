@@ -94,16 +94,30 @@ class InfluxdbSpeedtest():
             {
                 'measurement': 'speed_test_results',
                 'fields': {
-                    'download': result_dict['download'],
-                    'upload': result_dict['upload'],
-                    'ping': result_dict['server']['latency'],
+                    'download': result_dict['download']['bandwidth'],
+                    'download_bytes': result_dict['download']['bytes'],
+                    'upload': result_dict['upload']['bandwidth'],
+                    'upload_bytes': result_dict['upload']['bytes'],
+
+                    'latency': result_dict['ping']['latency'],
+                    'jitter': result_dict['ping']['jitter'],
+                    'packetLoss': result_dict['packetLoss'],
+
+                    'interface_internalIp': result_dict['interface']['internalIp'],
+
                     'server': result_dict['server']['id'],
-                    'server_name': result_dict['server']['name']
+                    'server_name': result_dict['server']['name'],
+                    'server_location': result_dict['server']['location'],
+                    'server_host': result_dict['server']['host'],
+
+                    'result': result_dict['result']['id'],
+                    'result_url':result_dict['result']['url']
                 },
                 'tags': {
                     'server': result_dict['server']['id'],
                     'server_name': result_dict['server']['name'],
-                    'server_country': result_dict['server']['country']
+                    'server_country': result_dict['server']['country'],
+                    'interface_internalIp': result_dict['interface']['internalIp']
                 }
             }
         ]
