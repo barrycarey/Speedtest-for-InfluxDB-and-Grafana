@@ -98,7 +98,7 @@ class InfluxdbSpeedtest():
                     'bytes_received': result_dict['bytes_received'],
                     'upload': result_dict['upload'],
                     'bytes_sent': result_dict['bytes_sent'],
-                    'latency': result_dict['server']['latency'],
+                    'ping': result_dict['server']['latency'],
                     'isp': result_dict['client']['isp'],
                     'server': result_dict['server']['id'],
                     'server_name': result_dict['server']['name'],
