@@ -4,7 +4,7 @@ import time
 import speedtest
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
-from requests import ConnectTimeout, ConnectionError
+from requests.exceptions import ConnectTimeout
 
 from influxspeedtest.common import log
 from influxspeedtest.config import config
