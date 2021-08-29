@@ -1,4 +1,4 @@
 influxdb
-speedtest-cli
 requests
 configparser
+influxdb-client

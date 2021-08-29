@@ -24,20 +24,28 @@ class ConfigManager():
         # General
         self.delay = self.config['GENERAL'].getint('Delay', fallback=2)
 
-        # InfluxDB
-        self.influx_address = self.config['INFLUXDB']['Address']
-        self.influx_port = self.config['INFLUXDB'].getint('Port', fallback=8086)
-        self.influx_database = self.config['INFLUXDB'].get('Database', fallback='speedtests')
-        self.influx_user = self.config['INFLUXDB'].get('Username', fallback='')
-        self.influx_password = self.config['INFLUXDB'].get('Password', fallback='')
-        self.influx_ssl = self.config['INFLUXDB'].getboolean('SSL', fallback=False)
-        self.influx_verify_ssl = self.config['INFLUXDB'].getboolean('Verify_SSL', fallback=True)
+        # Influx v1
+        self.influx_v1_address = self.config['INFLUXV1']['Address']
+        self.influx_v1_port = self.config['INFLUXV1'].getint('Port', fallback=8086)
+        self.influx_v1_database = self.config['INFLUXV1'].get('Database', fallback='speedtests')
+        self.influx_v1_user = self.config['INFLUXV1'].get('Username', fallback='')
+        self.influx_v1_password = self.config['INFLUXV1'].get('Password', fallback='')
+        self.influx_v1_ssl = self.config['INFLUXV1'].getboolean('SSL', fallback=False)
+        self.influx_v1_verify_ssl = self.config['INFLUXV1'].getboolean('Verify_SSL', fallback=True)
+
+        # INFLUX v2
+        self.influx_v2_url = self.config['INFLUXV2'].get('URL', fallback='')
+        self.influx_v2_token = self.config['INFLUXV2'].get('Token', fallback='')
+        self.influx_v2_org = self.config['INFLUXV2'].get('Org', fallback='')
+        self.influx_v2_bucket = self.config['INFLUXV2'].get('Bucket', fallback='')
 
         # Logging
-        self.logging_level = self.config['LOGGING'].get('Level', fallback='debug')
-        self.logging_level = self.logging_level.upper()
+        self.log_level = self.config['LOGGING'].get('Level', fallback='debug')
+        self.log_level = self.log_level.upper()
 
         # Speedtest
-        test_server = self.config['SPEEDTEST'].get('Server', fallback=None)
-        if test_server:
-            self.servers = test_server.split(',')
+        servers = self.config['SPEEDTEST'].get('Servers', fallback=None)
+        if servers:
+            self.servers = servers.split(',')
+        else:
+            self.servers = [None]
