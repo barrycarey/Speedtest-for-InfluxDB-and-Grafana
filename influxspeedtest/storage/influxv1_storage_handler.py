@@ -14,11 +14,6 @@ from influxspeedtest.storage.storage_handler import StorageHandlerBase
 
 class InfluxV1StorageHandler(StorageHandlerBase):
 
-    def __init__(self):
-        self.client = self._get_storage_client()
-        self._validate_connection()
-        log.debug('Built and validated Influx DB V1 handler')
-
     def _get_storage_client(self):
         return InfluxDBClient(
             config.influx_v1_address,
@@ -43,13 +38,16 @@ class InfluxV1StorageHandler(StorageHandlerBase):
                 log.critical('Unable to connect to InfluxDB with provided credentials')
             else:
                 log.critical('Failed to connect to InfluxDB for unknown reason')
-            raise StorageHandlerFailure('Failed to connect to storage engine')
+            return
+
+        self.active = True
 
 
     def save_results(self, data: SpeedTestResult):
 
         try:
             self.client.write_points(self.format_results(data))
+            self.write_failures = 0
         except (InfluxDBClientError, ConnectionError, InfluxDBServerError) as e:
             if hasattr(e, 'code') and e.code == 404:
                 log.error('Database %s Does Not Exist.  Attempting To Create', config.influx_v1_database)
@@ -57,7 +55,9 @@ class InfluxV1StorageHandler(StorageHandlerBase):
                 self.client.write_points(self.format_results(data))
                 return
 
+            self.write_failures += 1
             log.exception('Failed To Write To InfluxDB', exc_info=True)
+            return
 
         log.debug('Data written to Influx DB V1')
 

@@ -30,7 +30,6 @@ class ConfigManager():
         self.influx_v1_database = self.config['INFLUXV1'].get('Database', fallback='speedtests')
         self.influx_v1_user = self.config['INFLUXV1'].get('Username', fallback='')
         self.influx_v1_password = self.config['INFLUXV1'].get('Password', fallback='')
-        self.influx_v1_ssl = self.config['INFLUXV1'].getboolean('SSL', fallback=False)
         self.influx_v1_verify_ssl = self.config['INFLUXV1'].getboolean('Verify_SSL', fallback=True)
 
         # INFLUX v2
@@ -38,6 +37,12 @@ class ConfigManager():
         self.influx_v2_token = self.config['INFLUXV2'].get('Token', fallback='')
         self.influx_v2_org = self.config['INFLUXV2'].get('Org', fallback='')
         self.influx_v2_bucket = self.config['INFLUXV2'].get('Bucket', fallback='')
+        self.influx_v2_verify_ssl = self.config['INFLUXV2'].getboolean('Verify_SSL', fallback=True)
+
+        # Graphite
+        self.graphite_url = self.config['GRAPHITE'].get('URL', fallback='')
+        self.graphite_prefix = self.config['GRAPHITE'].get('Prefix', fallback='')
+        self.graphite_port = self.config['GRAPHITE'].getint('Port', fallback=2003)
 
         # Logging
         self.log_level = self.config['LOGGING'].get('Level', fallback='debug')

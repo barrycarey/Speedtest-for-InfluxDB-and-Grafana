@@ -8,7 +8,7 @@ from influxspeedtest.config import config
 from influxspeedtest.storage.influxv1_storage_handler import InfluxV1StorageHandler
 from influxspeedtest.storage.influxv2_storage_handler import InfluxV2StorageHandler
 
-storage_handlers = [InfluxV2StorageHandler()]
+storage_handlers = [InfluxV2StorageHandler('Influx v2'), InfluxV1StorageHandler('Influx v1')]
 
 while True:
 
@@ -21,7 +21,8 @@ while True:
 
         log.debug(results)
         for handler in storage_handlers:
-            handler.save_results(results)
+            if handler.active:
+                handler.save_results(results)
 
     log.debug('Waiting %s seconds until next test', config.delay)
     time.sleep(config.delay)

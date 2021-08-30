@@ -10,11 +10,6 @@ from influxspeedtest.storage.storage_handler import StorageHandlerBase
 
 class InfluxV2StorageHandler(StorageHandlerBase):
 
-    def __init__(self):
-        self.client = self._get_storage_client()
-        self._validate_connection()
-        log.debug('Built and validated Influx DB V2 handler')
-
     def _get_storage_client(self):
         return InfluxDBClient(
             url=config.influx_v2_url,
@@ -27,6 +22,7 @@ class InfluxV2StorageHandler(StorageHandlerBase):
         if health.status == 'fail':
             log.critical('Failed to connect to InfluxDB v2: %s', health.message)
             raise StorageHandlerFailure('Failed to connect to storage engine')
+        self.active = True
 
 
     def save_results(self, data: SpeedTestResult) -> None:

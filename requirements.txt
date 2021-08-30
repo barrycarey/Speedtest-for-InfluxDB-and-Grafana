@@ -2,3 +2,5 @@ influxdb
 requests
 configparser
 influxdb-client
+prometheus-client
+graphyte
