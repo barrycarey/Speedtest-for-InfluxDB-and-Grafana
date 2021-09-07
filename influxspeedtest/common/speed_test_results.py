@@ -4,7 +4,6 @@ from typing import Text
 
 @dataclass
 class SpeedTestResult:
-    jitter: float
     latency: float
     jitter: int
     download: int
@@ -14,3 +13,12 @@ class SpeedTestResult:
     server_country: Text
     server_location: Text
     packetloss: int = None
+
+    def to_dict(self):
+        return {
+            'jitter': self.jitter,
+            'latency': self.latency,
+            'download': self.download,
+            'upload': self.upload,
+            'server_id': self.server_id,
+        }

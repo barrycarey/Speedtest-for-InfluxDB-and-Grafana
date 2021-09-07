@@ -31,6 +31,7 @@ class ConfigManager():
         self.influx_v1_user = self.config['INFLUXV1'].get('Username', fallback='')
         self.influx_v1_password = self.config['INFLUXV1'].get('Password', fallback='')
         self.influx_v1_verify_ssl = self.config['INFLUXV1'].getboolean('Verify_SSL', fallback=True)
+        self.influx_v1_ssl = self.config['INFLUXV1'].getboolean('SSL', fallback=False)
 
         # INFLUX v2
         self.influx_v2_url = self.config['INFLUXV2'].get('URL', fallback='')

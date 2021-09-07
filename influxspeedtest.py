@@ -4,11 +4,12 @@ from influxspeedtest.common import log
 from influxspeedtest.common.exceptions import SpeedtestRunError
 from influxspeedtest.common.utils import run_speed_test, convert_results
 from influxspeedtest.config import config
+from influxspeedtest.storage.graphite_storage_handler import GraphiteStorageHandler
 
 from influxspeedtest.storage.influxv1_storage_handler import InfluxV1StorageHandler
 from influxspeedtest.storage.influxv2_storage_handler import InfluxV2StorageHandler
 
-storage_handlers = [InfluxV2StorageHandler('Influx v2'), InfluxV1StorageHandler('Influx v1')]
+storage_handlers = [InfluxV2StorageHandler('Influx v2'), InfluxV1StorageHandler('Influx v1'), GraphiteStorageHandler('Graphite')]
 
 while True:
 
