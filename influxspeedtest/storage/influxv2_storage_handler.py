@@ -1,12 +1,13 @@
+import logging
 from typing import Dict
 
 from influxdb_client import InfluxDBClient
-from influxspeedtest.common import log
 from influxspeedtest.common.exceptions import StorageHandlerFailure
 from influxspeedtest.common.speed_test_results import SpeedTestResult
 from influxspeedtest.config import config
-from influxspeedtest.storage.storage_handler import StorageHandlerBase
+from influxspeedtest.storage.storage_handler_base import StorageHandlerBase
 
+log = logging.getLogger(__name__)
 
 class InfluxV2StorageHandler(StorageHandlerBase):
 

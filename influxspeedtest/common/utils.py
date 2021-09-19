@@ -1,12 +1,14 @@
 import json
+import logging
+import os
 import subprocess
-from typing import Dict, List
+from typing import Dict
 
 from influxspeedtest.common.exceptions import SpeedtestRunError
-from influxspeedtest.common.logging import log
+
 from influxspeedtest.common.speed_test_results import SpeedTestResult
 
-
+log = logging.getLogger(__name__)
 
 def convert_results(results: Dict):
     return SpeedTestResult(
@@ -44,3 +46,7 @@ def run_speed_test(server: int = None) -> SpeedTestResult:
 
     return convert_results(results)
 
+
+
+def os_name() -> str:
+    return os.name

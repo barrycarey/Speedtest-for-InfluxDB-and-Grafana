@@ -10,3 +10,7 @@ class SpeedtestRunError(SpeedtestExceptionBase):
 class StorageHandlerFailure(SpeedtestExceptionBase):
     def __init__(self, message):
         super(StorageHandlerFailure, self).__init__(message)
+
+class UnsupportedOperatingSystem(SpeedtestExceptionBase):
+    def __init__(self, message):
+        super(UnsupportedOperatingSystem, self).__init__(message)

@@ -3,11 +3,12 @@ from typing import Dict
 
 from graphyte import Sender
 
-from influxspeedtest.common import log
 from influxspeedtest.common.speed_test_results import SpeedTestResult
 from influxspeedtest.config import config
-from influxspeedtest.storage.storage_handler import StorageHandlerBase
+from influxspeedtest.storage.storage_handler_base import StorageHandlerBase
 
+
+log = logging.getLogger(__name__)
 
 class GraphiteStorageHandler(StorageHandlerBase):
 

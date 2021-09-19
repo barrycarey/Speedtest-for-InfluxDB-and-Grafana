@@ -1,12 +1,16 @@
+import logging
 from typing import Dict, Text
 
-from influxspeedtest.common import log
 from influxspeedtest.common.speed_test_results import SpeedTestResult
+from influxspeedtest.config import ConfigManager
+
+log = logging.getLogger(__name__)
 
 
 class StorageHandlerBase:
 
-    def __init__(self, name: Text):
+    def __init__(self, name: Text, config: ConfigManager):
+        self.config = config
         self.active = False
         self.write_failures = 0
         self.name = name
