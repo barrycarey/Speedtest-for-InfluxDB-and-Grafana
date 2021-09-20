@@ -1,16 +1,18 @@
 import os
+import sys
 import time
 
-from influxspeedtest.common.exceptions import SpeedtestRunError
+from influxspeedtest.common.exceptions import SpeedtestRunError, SpeedtestInstallFailure
+from influxspeedtest.common.logging.log import configure_logger
 from influxspeedtest.common.speedtest_cli_validation import check_for_speedtest_cli, attempt_to_install_speedtest_cli
-from influxspeedtest.common.utils import run_speed_test, convert_results
+from influxspeedtest.common.utils import run_speed_test, build_storage_handlers
 from influxspeedtest.config.configmanager import ConfigManager
 
-from influxspeedtest.storage.graphite_storage_handler import GraphiteStorageHandler
-from influxspeedtest.common.logging import configure_logger
+from influxspeedtest.storage.graphite.graphite_storage_handler import GraphiteStorageHandler
 
-from influxspeedtest.storage.influxv1_storage_handler import InfluxV1StorageHandler
-from influxspeedtest.storage.influxv2_storage_handler import InfluxV2StorageHandler
+
+from influxspeedtest.storage.influxv1.influxv1_storage_handler import InfluxV1StorageHandler
+from influxspeedtest.storage.influxv2.influxv2_storage_handler import InfluxV2StorageHandler
 
 log = configure_logger(name=__name__)
 
@@ -18,7 +20,12 @@ config = ConfigManager(os.getenv('influxspeedtest', None) or 'config.ini')
 
 if not check_for_speedtest_cli():
     log.error('Unable to find Speedtest CLI.  Attempting to install')
-    attempt_to_install_speedtest_cli()
+    try:
+        attempt_to_install_speedtest_cli()
+    except SpeedtestInstallFailure:
+        sys.exit(1)
+config.get_storage_configs()
+build_storage_handlers(config)
 
 # TODO - Dynamic loading based on config keys
 storage_handlers = [

@@ -5,7 +5,7 @@ from unittest.mock import patch, Mock
 
 from influxspeedtest.common.exceptions import UnsupportedOperatingSystem
 from influxspeedtest.common.speedtest_cli_validation import check_for_speedtest_cli_windows, check_for_speedtest_cli, \
-    check_for_speedtest_cli_linux
+    check_for_speedtest_cli_linux, attempt_to_install_speedtest_cli
 
 
 class Test(TestCase):
@@ -58,3 +58,9 @@ class Test(TestCase):
         res_mock = Mock(stdout='')
         mock_run.return_value = res_mock
         self.assertFalse(check_for_speedtest_cli_linux())
+
+    @patch('influxspeedtest.common.speedtest_cli_validation.os_name')
+    def test_attempt_to_install_speedtest_cli_raise(self, mock_os_name):
+        mock_os_name.return_value = 'junk'
+        with self.assertRaises(UnsupportedOperatingSystem):
+            attempt_to_install_speedtest_cli()

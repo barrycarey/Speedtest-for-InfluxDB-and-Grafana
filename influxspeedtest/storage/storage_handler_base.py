@@ -1,23 +1,23 @@
 import logging
-from typing import Dict, Text
+from typing import Dict
 
 from influxspeedtest.common.speed_test_results import SpeedTestResult
-from influxspeedtest.config import ConfigManager
+from influxspeedtest.storage.storage_config import StorageConfig
 
 log = logging.getLogger(__name__)
 
 
 class StorageHandlerBase:
 
-    def __init__(self, name: Text, config: ConfigManager):
-        self.config = config
+    def __init__(self, storage_config: StorageConfig):
+
+        self.storage_config = storage_config
         self.active = False
         self.write_failures = 0
-        self.name = name
         self.client = self._get_storage_client()
         self._validate_connection()
         if not self.active:
-            log.error('Storage Handler %s failed to connect', self.name)
+            log.error('Storage Handler %s failed to connect', self.storage_config.name)
         else:
             log.info('Storage handler created and validated: %s', self.name)
 

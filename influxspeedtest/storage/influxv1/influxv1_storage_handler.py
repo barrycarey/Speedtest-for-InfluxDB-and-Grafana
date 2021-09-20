@@ -1,29 +1,32 @@
 import logging
-import sys
-from typing import Dict
+from typing import Dict, List
 
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
-from requests.exceptions import ConnectTimeout, ConnectionError
-
+from requests.exceptions import ConnectTimeout, ConnectionError, InvalidURL
 
 from influxspeedtest.common.speed_test_results import SpeedTestResult
-from influxspeedtest.config import config
+from influxspeedtest.storage.influxv1.influxv1_config import InfluxV1Config
 from influxspeedtest.storage.storage_handler_base import StorageHandlerBase
 
 log = logging.getLogger(__name__)
 
+
 class InfluxV1StorageHandler(StorageHandlerBase):
+
+    def __init__(self, storage_config: InfluxV1Config):
+        self.storage_config = storage_config
+        super().__init__(storage_config)
 
     def _get_storage_client(self):
         return InfluxDBClient(
-            config.influx_v1_address,
-            config.influx_v1_port,
-            database=config.influx_v1_database,
-            ssl=config.influx_v1_ssl,
-            verify_ssl=config.influx_v1_verify_ssl,
-            username=config.influx_v1_user,
-            password=config.influx_v1_password,
+            self.storage_config.url,
+            self.storage_config.port,
+            database=self.storage_config.database_name,
+            ssl=self.storage_config.ssl,
+            verify_ssl=self.storage_config.verify_ssl,
+            username=self.storage_config.user,
+            password=self.storage_config.password,
             timeout=5
         )
 
@@ -32,17 +35,20 @@ class InfluxV1StorageHandler(StorageHandlerBase):
             log.debug('Testing connection to InfluxDb using provided credentials')
             self.client.get_list_users()  # TODO - Find better way to test connection and permissions
             log.debug('Successful connection to InfluxDb')
-        except (ConnectTimeout, InfluxDBClientError, ConnectionError) as e:
-            if isinstance(e, ConnectTimeout):
-                log.critical('Unable to connect to InfluxDB at the provided address (%s)', config.influx_v1_address)
+            self.active = True
+        except (ConnectTimeout, InfluxDBClientError, ConnectionError, InvalidURL) as e:
+            if isinstance(e, InvalidURL):
+                log.error('Invalid URL for Influx V1')
+            elif isinstance(e, ConnectTimeout):
+                log.error('Unable to connect to InfluxDB at the provided address (%s)', self.config.influx_v1_address)
             elif e.code == 401:
-                log.critical('Unable to connect to InfluxDB with provided credentials')
+                log.error('Unable to connect to InfluxDB with provided credentials')
             else:
-                log.critical('Failed to connect to InfluxDB for unknown reason')
+                log.error('Failed to connect to InfluxDB for unknown reason')
+            self.active = False
             return
 
         self.active = True
-
 
     def save_results(self, data: SpeedTestResult):
 
@@ -51,8 +57,8 @@ class InfluxV1StorageHandler(StorageHandlerBase):
             self.write_failures = 0
         except (InfluxDBClientError, ConnectionError, InfluxDBServerError) as e:
             if hasattr(e, 'code') and e.code == 404:
-                log.error('Database %s Does Not Exist.  Attempting To Create', config.influx_v1_database)
-                self.client.create_database(config.influx_v1_database)
+                log.error('Database %s Does Not Exist.  Attempting To Create', self.storage_config.database_name)
+                self.client.create_database(self.storage_config.database_name)
                 self.client.write_points(self.format_results(data))
                 return
 
@@ -62,7 +68,7 @@ class InfluxV1StorageHandler(StorageHandlerBase):
 
         log.debug('Data written to Influx DB V1')
 
-    def format_results(self, data: SpeedTestResult) -> Dict:
+    def format_results(self, data: SpeedTestResult) -> List[Dict]:
         input_points = [
             {
                 'measurement': 'speed_test_results',

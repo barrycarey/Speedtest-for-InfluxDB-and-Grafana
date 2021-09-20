@@ -6,6 +6,7 @@ from influxspeedtest.common.logging.logfilters import SingleLevelFilter
 
 default_format = '%(asctime)s - %(module)s:%(funcName)s:%(lineno)d - %(levelname)s: %(message)s'
 
+
 def configure_logger(name: str = None, fmt: str = None, filters=None) -> logging.Logger:
     if filters is None:
         filters = []

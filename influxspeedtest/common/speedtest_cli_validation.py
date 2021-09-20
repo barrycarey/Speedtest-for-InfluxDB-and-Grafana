@@ -7,7 +7,7 @@ from io import BytesIO
 
 import requests
 
-from influxspeedtest.common.exceptions import UnsupportedOperatingSystem
+from influxspeedtest.common.exceptions import UnsupportedOperatingSystem, SpeedtestInstallFailure
 from influxspeedtest.common.utils import os_name
 
 log = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def check_for_speedtest_cli_linux() -> bool:
 def attempt_to_install_speedtest_cli():
     if os_name() != 'nt':
         log.error('Automatic install is not supported on your OS. Please follow installation instructions here https://www.speedtest.net/apps/cli')
-        sys.exit(1)
+        raise UnsupportedOperatingSystem(f'Unsupported OS {os_name()}')
     download_speedtest_cli_windows()
 
 
@@ -44,7 +44,7 @@ def download_speedtest_cli_windows():
     r = requests.get('https://install.speedtest.net/app/cli/ookla-speedtest-1.0.0-win64.zip')
     if r.status_code != 200:
         log.critical('Unable to download Speedtest CLI package, aborting')
-        sys.exit(1)
+        raise SpeedtestInstallFailure('Failed to download Speedtest CLI')
 
     # TODO - Need error handling
     zfile = zipfile.ZipFile(BytesIO(r.content))
@@ -54,4 +54,4 @@ def download_speedtest_cli_windows():
     zfile.extractall(bin_dir)
     if not os.path.isfile(os.path.join(bin_dir, 'speedtest.exe')):
         log.critical('Failed to download Speedtest CLI executable')
-        sys.exit()
+        raise SpeedtestInstallFailure('Failed to download Speedtest CLI')

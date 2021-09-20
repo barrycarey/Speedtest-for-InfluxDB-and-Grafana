@@ -4,3 +4,4 @@ configparser
 influxdb-client
 prometheus-client
 graphyte
+pydantic

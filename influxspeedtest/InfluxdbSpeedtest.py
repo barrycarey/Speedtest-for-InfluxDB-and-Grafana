@@ -1,16 +1,12 @@
-import json
-import subprocess
 import sys
 import time
-from typing import Dict, List
 
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from requests.exceptions import ConnectTimeout, ConnectionError
 
-from influxspeedtest.common import log
+from influxspeedtest.common.logging import log
 from influxspeedtest.common.exceptions import SpeedtestRunError
-from influxspeedtest.common.speed_test_results import SpeedTestResult
 from influxspeedtest.config import config
 
 
