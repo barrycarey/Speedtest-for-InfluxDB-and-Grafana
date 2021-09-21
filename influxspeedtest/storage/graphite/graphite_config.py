@@ -1,9 +1,8 @@
-from dataclasses import dataclass
+from influxspeedtest.storage.storage_config import StorageConfig
 
 
-@dataclass
-class GraphiteConfig:
-    name: str
+class GraphiteConfig(StorageConfig):
+    name: str = 'Graphite'
     url: str
-    prefix: str
+    prefix: str = 'speedtest'
     port: int

@@ -1,32 +1,52 @@
 **Speedtest.net Collector For InfluxDB and Grafana**
 ------------------------------
 
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/barrycarey/redditrepostsleuth)
+![Master](https://github.com/barrycarey/RedditRepostSleuth/workflows/Tests/badge.svg)
+![Travis (.com)](https://img.shields.io/travis/com/barrycarey/RedditRepostSleuth)
+![semver](https://img.shields.io/badge/semver-1.0.0-blue)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/barrycarey/RedditRepostSleuth/master)
+------------------------------
 ![Screenshot](https://puu.sh/tmfOA/b5576e88de.png)
-
+------------------------------
 This tool is a wrapper for speedtest-cli which allows you to run periodic speedtets and save the results to Influxdb 
 
-## Configuration within config.ini
+## Configuration
+
+By default the tool looks for a config.ini file in current working directory.  If you wish to override this, set the SPEEDTEST_CONFIG environment variable with the path to the file
 
 #### GENERAL
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Delay          |Delay between runs                                                                                                  |
-#### INFLUXDB
+#### STORAGE_INFLUXV1
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Address        |Delay between updating metrics                                                                                      |
+|Url            |URL of InfluxDB server                                                                                     |
 |Port           |InfluxDB port to connect to.  8086 in most cases                                                                    |
 |Database       |Database to write collected stats to                                                                                |
 |Username       |User that has access to the database                                                                                |
 |Password       |Password for above user                                                                                             |
+|SSL       | Use SSL Connection                                                                                        |
+|Verify SSL       |Validate SSL cert    
+#### STORAGE_INFLUXV2
+|Key            |Description                                                                                                         |
+|:--------------|:-------------------------------------------------------------------------------------------------------------------|
+|Url            |URL of InfluxDB server                                                                                     |
+|Token       | API token to use                                                                                |
+|Bucket       |Bucket to user                                                                                            |
+|Org       | Org to use                                                                                        |
+|Verify SSL       |Validate SSL cert  |
+#### STORAGE_GRAPHITE
+|Key            |Description                                                                                                         |
+|:--------------|:-------------------------------------------------------------------------------------------------------------------|
+|Url            |URL of Graphite server                                                                                     |
+|Prefix       | Metric Prefix                                                                               |
+|Port       | Graphite Port                                                                                          |
 #### SPEEDTEST
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Server         |Comma sperated list of servers.  Leave blank for auto                                                            |
-#### LOGGING
-|Key            |Description                                                                                                         |
-|:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Level          |Set how verbose the console output is                                                           |
 
 
 

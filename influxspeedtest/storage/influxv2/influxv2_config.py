@@ -1,11 +1,10 @@
-from dataclasses import dataclass
+from influxspeedtest.storage.storage_config import StorageConfig
 
 
-@dataclass
-class InfluxV2Config:
-    name: str
+class InfluxV2Config(StorageConfig):
+    name: str = 'Influx V2'
     url: str
     token: str
     org: str
     bucket: str
-    ssl: bool
+    verify_ssl: bool = False

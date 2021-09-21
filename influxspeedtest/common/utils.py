@@ -2,18 +2,14 @@ import json
 import logging
 import os
 import subprocess
+from configparser import ConfigParser
 from typing import Dict, List
 
-from influxspeedtest.common.exceptions import SpeedtestRunError
+from pydantic import ValidationError
 
+from influxspeedtest.common.exceptions import SpeedtestRunError
 from influxspeedtest.common.speed_test_results import SpeedTestResult
-from influxspeedtest.config.configmanager import ConfigManager
-from influxspeedtest.storage.graphite.graphite_config import GraphiteConfig
-from influxspeedtest.storage.graphite.graphite_storage_handler import GraphiteStorageHandler
-from influxspeedtest.storage.influxv1.influxv1_config import InfluxV1Config
-from influxspeedtest.storage.influxv1.influxv1_storage_handler import InfluxV1StorageHandler
-from influxspeedtest.storage.influxv2.influxv2_config import InfluxV2Config
-from influxspeedtest.storage.influxv2.influxv2_storage_handler import InfluxV2StorageHandler
+from influxspeedtest.storage import storage_config_map
 from influxspeedtest.storage.storage_handler_base import StorageHandlerBase
 
 log = logging.getLogger(__name__)
@@ -62,27 +58,38 @@ def run_speed_test(server: int = None) -> SpeedTestResult:
 
 def os_name() -> str:
     """
-    Wrapper around os.name to faciliate easier testing
+    Wrapper around os.name to facilitate easier testing
     :rtype: str
     """
     return os.name
 
 
-def build_storage_handlers(config_manager: ConfigManager) -> List[StorageHandlerBase]:
+def filter_dead_storage_handlers(handler: StorageHandlerBase) -> bool:
+    handler.validate_connection()
+    return handler.active
+
+def init_storage_handlers(config: ConfigParser) -> List[StorageHandlerBase]:
+    """
+    Create all storage handlers available in config file.
+    :rtype: List[StorageHandlerBase]
+    """
     handlers = []
-    influx_v1_config = config_manager.get_influx_v1_settings()
-    if influx_v1_config:
-        handler = InfluxV1StorageHandler(InfluxV1Config(**influx_v1_config))
-        if handler.active:
-            handlers.append(handler)
-    influx_v2_config = config_manager.get_influx_v2_settings()
-    if influx_v1_config:
-        handler = InfluxV2StorageHandler(InfluxV2Config(**influx_v2_config))
-        if handler.active:
-            handlers.append(handler)
-    graphite_config = config_manager.get_graphite_settings()
-    if influx_v1_config:
-        handler = GraphiteStorageHandler(GraphiteConfig(**graphite_config))
-        if handler.active:
-            handlers.append(handler)
-    return handlers
+    for section in config.sections():
+        if 'storage' in section.lower():
+            storage_handler_name = section.split('_')[1].lower()
+            if storage_handler_name not in storage_config_map:
+                log.error('Handler %s is not mapped, skipping', storage_handler_name)
+                continue
+
+            try:
+                config = storage_config_map[storage_handler_name]['config'](**dict(config.items(section)))
+            except ValidationError as e:
+                log.error(e)
+                continue
+            handlers.append(
+                storage_config_map[storage_handler_name]['handler'](config)
+            )
+            log.info('Storage Handler %s created', storage_handler_name)
+
+    return list(filter(filter_dead_storage_handlers, handlers))
+

@@ -30,7 +30,7 @@ class InfluxV1StorageHandler(StorageHandlerBase):
             timeout=5
         )
 
-    def _validate_connection(self):
+    def validate_connection(self):
         try:
             log.debug('Testing connection to InfluxDb using provided credentials')
             self.client.get_list_users()  # TODO - Find better way to test connection and permissions
@@ -41,7 +41,7 @@ class InfluxV1StorageHandler(StorageHandlerBase):
                 log.error('Invalid URL for Influx V1')
             elif isinstance(e, ConnectTimeout):
                 log.error('Unable to connect to InfluxDB at the provided address (%s)', self.config.influx_v1_address)
-            elif e.code == 401:
+            elif hasattr(e, 'code') and e.code == 401:
                 log.error('Unable to connect to InfluxDB with provided credentials')
             else:
                 log.error('Failed to connect to InfluxDB for unknown reason')

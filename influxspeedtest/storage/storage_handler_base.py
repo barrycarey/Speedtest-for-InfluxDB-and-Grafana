@@ -15,11 +15,7 @@ class StorageHandlerBase:
         self.active = False
         self.write_failures = 0
         self.client = self._get_storage_client()
-        self._validate_connection()
-        if not self.active:
-            log.error('Storage Handler %s failed to connect', self.storage_config.name)
-        else:
-            log.info('Storage handler created and validated: %s', self.name)
+        log.info('Build storage handler %s', self.storage_config.name)
 
     def _get_storage_client(self):
         """
@@ -27,7 +23,7 @@ class StorageHandlerBase:
         """
         raise NotImplementedError()
 
-    def _validate_connection(self) -> None:
+    def validate_connection(self) -> None:
         """
         Validate we have an active connection to this storage client
         :rtype: None
