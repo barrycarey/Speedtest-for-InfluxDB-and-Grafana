@@ -1,11 +1,12 @@
 import logging
 from typing import Dict
 
-from graphyte import Sender
 
-from influxspeedtest.common.speed_test_results import SpeedTestResult
-from influxspeedtest.storage import GraphiteConfig
-from influxspeedtest.storage.storage_handler_base import StorageHandlerBase
+from speedmon.common.speed_test_results import SpeedTestResult
+from speedmon.storage.graphite.graphite_config import GraphiteConfig
+
+from speedmon.storage.graphite.graphyte_sender import GraphyteSender
+from speedmon.storage.storage_handler_base import StorageHandlerBase
 
 log = logging.getLogger(__name__)
 
@@ -17,15 +18,15 @@ class GraphiteStorageHandler(StorageHandlerBase):
         super().__init__(storage_config)
 
     def _get_storage_client(self):
-        return Sender(self.storage_config.url, prefix=self.storage_config.prefix, port=self.storage_config.port,
+        return GraphyteSender(self.storage_config.url, prefix=self.storage_config.prefix, port=self.storage_config.port,
                       log_sends=True)
 
     def validate_connection(self) -> None:
         try:
             self.client.send('health', 1)
             self.active = True
-        except Exception as e:
-            log.exception('Failed to activate graphite')
+        except ConnectionRefusedError as e:
+            log.exception('Failed to activate graphite', exc_info=False)
             self.active = False
 
     def save_results(self, data: SpeedTestResult) -> None:
@@ -49,6 +50,6 @@ class GraphiteStorageHandler(StorageHandlerBase):
                 'server_id': data.server_id,
                 'server_name': data.server_name.replace(' ', '_'),
                 'server_country': data.server_country.replace(' ', '_'),
-                'server_location': data.server_location.replace(' ', '_')
+                'server_location': data.server_location.replace(', ', '_').replace(' ', '_')
             }
         }

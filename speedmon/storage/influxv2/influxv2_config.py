@@ -1,4 +1,4 @@
-from influxspeedtest.storage.storage_config import StorageConfig
+from speedmon.storage.storage_config import StorageConfig
 
 
 class InfluxV2Config(StorageConfig):

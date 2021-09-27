@@ -5,9 +5,9 @@ from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from requests.exceptions import ConnectTimeout, ConnectionError, InvalidURL
 
-from influxspeedtest.common.speed_test_results import SpeedTestResult
-from influxspeedtest.storage.influxv1.influxv1_config import InfluxV1Config
-from influxspeedtest.storage.storage_handler_base import StorageHandlerBase
+from speedmon.common.speed_test_results import SpeedTestResult
+from speedmon.storage.influxv1.influxv1_config import InfluxV1Config
+from speedmon.storage.storage_handler_base import StorageHandlerBase
 
 log = logging.getLogger(__name__)
 

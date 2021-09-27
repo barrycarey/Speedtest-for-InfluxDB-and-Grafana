@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 
-from influxspeedtest.common.logging.logfilters import SingleLevelFilter
+from speedmon.common.logging.logfilters import SingleLevelFilter
 
 default_format = '%(asctime)s - %(module)s:%(funcName)s:%(lineno)d - %(levelname)s: %(message)s'
 

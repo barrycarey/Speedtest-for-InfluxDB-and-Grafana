@@ -3,9 +3,10 @@ from typing import Dict, List
 
 from influxdb_client import InfluxDBClient
 
-from influxspeedtest.common.speed_test_results import SpeedTestResult
-from influxspeedtest.storage import InfluxV2Config
-from influxspeedtest.storage.storage_handler_base import StorageHandlerBase
+from speedmon.common.speed_test_results import SpeedTestResult
+from speedmon.storage.influxv2.influxv2_config import InfluxV2Config
+
+from speedmon.storage.storage_handler_base import StorageHandlerBase
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class InfluxV2StorageHandler(StorageHandlerBase):
         if health.status == 'fail':
             log.error('Failed to connect to InfluxDB v2: %s', health.message)
             self.active = False
+            return
         self.active = True
 
 

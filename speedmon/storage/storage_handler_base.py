@@ -1,8 +1,8 @@
 import logging
 from typing import Dict
 
-from influxspeedtest.common.speed_test_results import SpeedTestResult
-from influxspeedtest.storage.storage_config import StorageConfig
+from speedmon.common.speed_test_results import SpeedTestResult
+from speedmon.storage.storage_config import StorageConfig
 
 log = logging.getLogger(__name__)
 

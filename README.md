@@ -1,4 +1,4 @@
-**Speedtest.net Collector For InfluxDB and Grafana**
+**SpeedMon**
 ------------------------------
 
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/barrycarey/redditrepostsleuth)
@@ -9,11 +9,24 @@
 ------------------------------
 ![Screenshot](https://puu.sh/tmfOA/b5576e88de.png)
 ------------------------------
-This tool is a wrapper for speedtest-cli which allows you to run periodic speedtets and save the results to Influxdb 
+Automatically run periodic internet speed tests and save results to a variety of storage backends.  
+
+**Supported Backends**
+* InfluxDB v1
+* InfluxDB v2
+* Graphite
+
+Speed tests are run using the official speedtest.net CLI tool. 
+
+Docker, Windows, and Linux are supported.  Linux users are required to install the speedtest package first. It will automatically download on Windows. 
 
 ## Configuration
 
-By default the tool looks for a config.ini file in current working directory.  If you wish to override this, set the SPEEDTEST_CONFIG environment variable with the path to the file
+Settings are loaded from the config.ini in the root of the project.  
+
+If you wish to override the config location, set the SPEEDTEST_CONFIG environment variable with the path to the file
+
+Storage backends are dynamically loaded based on what is in the config file. You can safely delete the sections for backends not in use.  
 
 #### GENERAL
 |Key            |Description                                                                                                         |
@@ -105,3 +118,12 @@ barrycarey/speedtest-for-influxdb-and-grafana
  curl -O https://raw.githubusercontent.com/barrycarey/Speedtest-for-InfluxDB-and-Grafana/master/docker-compose.yml docker-compose.yml
  docker-compose up -d
  ```
+
+## Adding Additional Backends
+If you wish to contribute support for additional backends the process is straight forward. 
+
+Add a new Package under speedmon.storage.  Create a new Storage Handler that inherits from StorageHandlerBase.  Create a new config that inherits from StorageConfig.  Add the new storage backed to speedmon.storage.storage_config_map
+
+Add the example config options to config.ini and name the section [STORAGE_NAME].  
+
+The handler will automatically be loaded and initialized if the config options are available in the config.ini

@@ -1,89 +1,74 @@
-import os
+import json
 from configparser import ConfigParser
 from unittest import TestCase
 from unittest.mock import patch, Mock
 
-from influxspeedtest.common.utils import init_storage_handlers
-from influxspeedtest.storage import InfluxV1StorageHandler, InfluxV2StorageHandler
+from speedmon.common.exceptions import SpeedtestRunError
+from speedmon.common.speed_test_results import SpeedTestResult
+from speedmon.common.utils import build_speedtest_command_line, run_speed_test
 
 
 class Test(TestCase):
 
-    def test_init_storage_handlers_no_configs(self):
-        config = ConfigParser()
-        config.read_dict({
-            'GENERAL': {
-                'timeout': 1
+    @patch('speedmon.common.utils.os.getcwd')
+    @patch('speedmon.common.utils.os_name')
+    def test_build_speedtest_command_line_windows(self, mock_os_name, mock_getcwd):
+        mock_getcwd.return_value = 'C:\\speedtest\\'
+        mock_os_name.return_value = 'nt'
+        expected = [r'C:\speedtest\bin\speedtest.exe', '-f', 'json']
+        self.assertListEqual(expected, build_speedtest_command_line())
+
+    @patch('speedmon.common.utils.os.getcwd')
+    @patch('speedmon.common.utils.os_name')
+    def test_build_speedtest_command_line_windows_with_server(self, mock_os_name, mock_getcwd):
+        mock_getcwd.return_value = 'C:\\speedtest\\'
+        mock_os_name.return_value = 'nt'
+        expected = [r'C:\speedtest\bin\speedtest.exe', '-f', 'json', '-s', 1111]
+        self.assertListEqual(expected, build_speedtest_command_line(server=1111))
+
+    @patch('speedmon.common.utils.os_name')
+    def test_build_speedtest_command_line_linux(self, mock_os_name):
+        mock_os_name.return_value = 'posix'
+        expected = [r'speedtest', '-f', 'json']
+        self.assertListEqual(expected, build_speedtest_command_line())
+
+    @patch('speedmon.common.utils.os_name')
+    def test_build_speedtest_command_line_linux_with_server(self, mock_os_name):
+        mock_os_name.return_value = 'posix'
+        expected = [r'speedtest', '-f', 'json', '-s', 1111]
+        self.assertListEqual(expected, build_speedtest_command_line(server=1111))
+
+    @patch('speedmon.common.utils.subprocess.run')
+    def test_run_speed_test_with_stderr(self, mock_subprocess):
+        mock_subprocess.return_value = Mock(stderr='{"message": "some error"}')
+        with self.assertRaises(SpeedtestRunError):
+            run_speed_test()
+
+    @patch('speedmon.common.utils.subprocess.run')
+    def test_run_speed_test_with_stdout_error(self, mock_subprocess):
+        mock_subprocess.return_value = Mock(stdout='{"error": "some error"}', stderr=None)
+        with self.assertRaises(SpeedtestRunError):
+            run_speed_test()
+
+    @patch('speedmon.common.utils.subprocess.run')
+    def test_run_speed_test_with_valid_results(self, mock_subprocess):
+        results = {
+            'ping': {
+                'latency': 100
+            },
+            'download': {
+                'bandwidth': 1000
+            },
+            'upload': {
+                'bandwidth': 2000
+            },
+            'server': {
+                'id': 1234,
+                'name': 'test server',
+                'country': 'USA',
+                'location': 'Maine'
             }
-        })
-        self.assertEqual(0, len(init_storage_handlers(config)))
-
-    def test_init_storage_handlers_not_mapped(self):
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_TEST': {
-                'timeout': 1
-            }
-        })
-        self.assertEqual(0, len(init_storage_handlers(config)))
-
-    @patch('influxspeedtest.common.utils.filter_dead_storage_handlers')
-    def test_init_storage_handlers_influxv1_init_valid_config(self, mock_init_handler):
-        mock_init_handler.return_value = True
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_INFLUXV1': {
-                'url': 'test',
-                'port': '8086',
-                'database': 'test',
-                'username': 'test',
-                'password': 'test',
-                'ssl': 'false',
-                'verify_ssl': 'false'
-            }
-        })
-        result = init_storage_handlers(config)
-        self.assertEqual(1, len(result))
-        self.assertIsInstance(result[0], InfluxV1StorageHandler)
-
-    @patch('influxspeedtest.common.utils.filter_dead_storage_handlers')
-    def test_init_storage_handlers_influxv1_init_invalid_config(self, mock_init_handler):
-        mock_init_handler.return_value = True
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_INFLUXV1': {
-
-            }
-        })
-        result = init_storage_handlers(config)
-        self.assertEqual(0, len(result))
-
-
-    @patch('influxspeedtest.common.utils.filter_dead_storage_handlers')
-    def test_init_storage_handlers_influxv2_init_valid_config(self, mock_init_handler):
-        mock_init_handler.return_value = True
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_INFLUXV2': {
-                'url': 'test',
-                'token': 'test',
-                'org': 'test',
-                'bucket': 'test',
-                'verify_ssl': 'false'
-            }
-        })
-        result = init_storage_handlers(config)
-        self.assertEqual(1, len(result))
-        self.assertIsInstance(result[0], InfluxV2StorageHandler)
-
-    @patch('influxspeedtest.common.utils.filter_dead_storage_handlers')
-    def test_init_storage_handlers_influxv2_init_invalid_config(self, mock_init_handler):
-        mock_init_handler.return_value = True
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_INFLUXV2': {
-
-            }
-        })
-        result = init_storage_handlers(config)
-        self.assertEqual(0, len(result))
+        }
+        mock_subprocess.return_value = Mock(stdout=json.dumps(results), stderr=None)
+        r = run_speed_test()
+        self.assertIsInstance(r, SpeedTestResult)
