@@ -22,9 +22,11 @@ Docker, Windows, and Linux are supported.  Linux users are required to install t
 
 ## Configuration
 
-Settings are loaded from the config.ini in the root of the project.  
+Speedmon can be configured from a configuration file, environment variables or both.  If the same setting is defined in both places the ENV variable takes priority
 
-If you wish to override the config location, set the SPEEDTEST_CONFIG environment variable with the path to the file
+### Configuring From .ini
+
+When initializing Speedmon looks for the SPEEDTEST_CONFIG ENV Variable to know what config file to load
 
 Storage backends are dynamically loaded based on what is in the config file. You can safely delete the sections for backends not in use.  
 
@@ -61,8 +63,41 @@ Storage backends are dynamically loaded based on what is in the config file. You
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Server         |Comma sperated list of servers.  Leave blank for auto                                                            |
 
+### Configuring From ENV
 
+#### Influx v1
 
+```
+INFLUXV1_NAME
+INFLUXV1_URL
+INFLUXV1_PORT
+INFLUXV1_DATABASE_NAME
+INFLUXV1_USER
+INFLUXV1_PASSWORD
+INFLUXV1_VERIFY_SSL
+INFLUXV1_SSL
+```
+
+#### Influx v2
+
+```
+INFLUXV2_NAME
+INFLUXV2_URL
+INFLUXV2_TOKEN
+INFLUXV2_ORG
+INFLUXV2_BUCKET
+INFLUXV2_VERIFY_SSL
+```
+
+#### Graphite v2
+
+```
+GRAPHITE_NAME
+GRAPHITE_URL
+GRAPHITE_PREFIX
+GRAPHITE_PORT
+
+```
 ## Usage
 
 Before the first use run pip3 install -r requirements.txt
