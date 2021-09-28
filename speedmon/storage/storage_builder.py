@@ -1,7 +1,7 @@
 import logging
 import os
 from configparser import ConfigParser
-from typing import List
+from typing import List, Optional
 
 from pydantic import ValidationError
 
@@ -59,7 +59,41 @@ def init_storage_handlers_from_env() -> List[StorageHandlerBase]:
 
     return handlers
 
+def init_storage_handler_from_env(handler_name: str) -> Optional[StorageHandlerBase]:
+    pass
+
+def init_storage_handler_from_ini(handler_name: str, cfg: ConfigParser) -> Optional[StorageHandlerBase]:
+    pass
+
+def init_storage_handlers(config: ConfigParser ) -> List[StorageHandlerBase]:
+    storage_handlers = []
+    for handler_name in STORAGE_CONFIG_MAP.keys():
+        storage_config = None
+        try:
+            if config:
+                storage_config = storage_handler_config_from_config_obj(config)
+            storage_config = storage_handler_conf_from_env(handler_name)  # Takes priority if both are defined
+        except (ValidationError, ValueError):
+            pass
+
+        if storage_config:
+            storage_handlers.append(
+                STORAGE_CONFIG_MAP[handler_name]['handler'](storage_config)
+            )
+            continue
+
+    return storage_handlers
+
+
+
 def storage_handler_config_from_config_obj(handler_name: str, config: ConfigParser) -> StorageConfig:
+    """
+    Take a ConfigParser object and built a storage config from the sections
+    :param handler_name: Name of handler to try and build config for
+    :param config: ConfigParser Object
+    :return: StorageConfig
+    :rtype: StorageConfig
+    """
     if handler_name not in STORAGE_CONFIG_MAP.keys():
         raise ValueError(
             f'{handler_name} is not a valid storage handler name.  Valid options are {STORAGE_CONFIG_MAP.keys}')
