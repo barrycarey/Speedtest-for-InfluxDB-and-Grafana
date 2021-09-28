@@ -5,4 +5,4 @@ class GraphiteConfig(StorageConfig):
     name: str = 'Graphite'
     url: str
     prefix: str = 'speedtest'
-    port: int
+    port: int = 2003

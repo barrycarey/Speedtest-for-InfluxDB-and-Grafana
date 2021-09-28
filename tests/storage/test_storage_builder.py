@@ -5,13 +5,15 @@ from unittest.mock import patch
 
 from pydantic import ValidationError
 
+from speedmon.config.config_manager import ConfigManager
 from speedmon.storage.constants import ValidHandlerNames
 from speedmon.storage.graphite.graphite_config import GraphiteConfig
 from speedmon.storage.influxv1.influxv1_config import InfluxV1Config
 from speedmon.storage.influxv1.influxv1_storage_handler import InfluxV1StorageHandler
 from speedmon.storage.influxv2.influxv2_config import InfluxV2Config
 from speedmon.storage.influxv2.influxv2_storage_handler import InfluxV2StorageHandler
-from speedmon.storage.storage_builder import init_storage_handlers_from_cfg, storage_handler_conf_from_env
+from speedmon.storage.storage_builder import init_storage_handlers_from_cfg, storage_handler_conf_from_env, \
+    storage_handler_config_from_config_obj
 
 
 class TestStorageBuilder(TestCase):
@@ -147,4 +149,29 @@ class TestStorageBuilder(TestCase):
     def test_storage_handler_conf_from_env_invalid_handler_name(self):
         with self.assertRaises(ValueError):
             storage_handler_conf_from_env('dummy_handler')
+
+    def test_storage_handler_config_from_config_obj_invalid_handler_name(self):
+        config = ConfigManager(config_vals={'GENERAL': {'Delay': 1}})
+        with self.assertRaises(ValueError):
+            storage_handler_config_from_config_obj('dummy_handler', config.loaded_config)
+
+    def test_storage_handler_config_from_config_obj_no_storage_settings(self):
+        config = ConfigManager(config_vals={'GENERAL': {'Delay': 1}})
+        with self.assertRaises(ValueError):
+            storage_handler_config_from_config_obj('influxv2', config.loaded_config)
+
+    def test_storage_handler_config_from_config_obj_valid_config(self):
+        config_vals = {'GRAPHITE': {
+            'url': 'dummyhost'
+        }}
+        config = ConfigManager(config_vals=config_vals)
+        r = storage_handler_config_from_config_obj('graphite', config.loaded_config)
+        self.assertIsInstance(r, GraphiteConfig)
+        self.assertEqual('dummyhost', r.url)
+
+    def test_storage_handler_config_from_config_obj_missing_required(self):
+        config = ConfigManager(config_vals={'GRAPHITE': {}})
+        with self.assertRaises(ValidationError):
+            storage_handler_config_from_config_obj('graphite', config.loaded_config)
+
 

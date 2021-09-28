@@ -59,24 +59,33 @@ def init_storage_handlers_from_env() -> List[StorageHandlerBase]:
 
     return handlers
 
+def storage_handler_config_from_config_obj(handler_name: str, config: ConfigParser) -> StorageConfig:
+    if handler_name not in STORAGE_CONFIG_MAP.keys():
+        raise ValueError(
+            f'{handler_name} is not a valid storage handler name.  Valid options are {STORAGE_CONFIG_MAP.keys}')
 
-def storage_handler_conf_from_env(hander_name: str) -> StorageConfig:
+    if handler_name.upper() not in config.sections():
+        raise ValueError(f'No {handler_name.upper()} section in config')
+
+    return STORAGE_CONFIG_MAP[handler_name]['config'](**dict(config.items(handler_name.upper())))
+
+def storage_handler_conf_from_env(handler_name: str) -> StorageConfig:
     """
     Take a name of a storage handler and scan ENV variables looking for any prefixed with the name.
 
     If no ENV Vars are found, pydantic will throw a validation error when attempting to create
 
-    :param hander_name: Name of handler to look for config items
+    :param handler_name: Name of handler to look for config items
     :return: A Storage config
     :rtype: StorageConfig
     """
-    if hander_name not in STORAGE_CONFIG_MAP.keys():
+    if handler_name not in STORAGE_CONFIG_MAP.keys():
         raise ValueError(
-            f'{hander_name} is not a valid storage handler name.  Valid options are {STORAGE_CONFIG_MAP.keys}')
+            f'{handler_name} is not a valid storage handler name.  Valid options are {STORAGE_CONFIG_MAP.keys}')
 
     config_vals = {}
     for key, value in os.environ.items():
-        if hander_name.upper() in key:
-            new_key = key.replace(f'{hander_name.upper()}_', '').lower()
+        if handler_name.upper() in key:
+            new_key = key.replace(f'{handler_name.upper()}_', '').lower()
             config_vals[new_key] = value
-    return STORAGE_CONFIG_MAP[hander_name]['config'](**config_vals)
+    return STORAGE_CONFIG_MAP[handler_name]['config'](**config_vals)
