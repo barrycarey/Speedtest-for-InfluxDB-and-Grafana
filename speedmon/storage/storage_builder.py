@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from pydantic import ValidationError
 
-from speedmon.storage.constants import STORAGE_CONFIG_MAP, ValidHandlerNames
+from speedmon.storage.constants import STORAGE_CONFIG_MAP
 from speedmon.storage.storage_config import StorageConfig
 from speedmon.storage.storage_handler_base import StorageHandlerBase
 
@@ -17,76 +17,62 @@ def filter_dead_storage_handlers(handler: StorageHandlerBase) -> bool:
     return handler.active
 
 
-def init_storage_handlers_from_cfg(config: ConfigParser) -> List[StorageHandlerBase]:
+def init_storage_handlers(ini: ConfigParser = None) -> List[StorageHandlerBase]:
     """
-    Create all storage handlers available in config file.
+    Attempt to build each type of storage handler from both an ini file (if provided) and from ENV.
+    If we successfully build the same handler from each source, take the ENV handler
+    :param ini: Optional ConfigParser object
+    :return: List of storage handlers
     :rtype: List[StorageHandlerBase]
     """
-    handlers = []
-    for section in config.sections():
-        if 'storage' in section.lower():
-            storage_handler_name = section.split('_')[1].lower()
-            if storage_handler_name not in STORAGE_CONFIG_MAP:
-                log.error('Handler %s is not mapped, skipping', storage_handler_name)
-                continue
-
-            try:
-                hndlr_cfg = STORAGE_CONFIG_MAP[storage_handler_name]['config'](**dict(config.items(section)))
-            except ValidationError as e:
-                log.error(e)
-                continue
-            handlers.append(
-                STORAGE_CONFIG_MAP[storage_handler_name]['handler'](hndlr_cfg)
-            )
-            log.info('Storage Handler %s created', storage_handler_name)
-
-    return list(filter(filter_dead_storage_handlers, handlers))
-
-
-def init_storage_handlers_from_env() -> List[StorageHandlerBase]:
-    handlers = []
-    for key in STORAGE_CONFIG_MAP.keys():
-        try:
-            hndlr_cfg = storage_handler_conf_from_env(key)
-        except ValidationError:
-            log.debug('No ENV config found for %s', key)
-            continue
-
-        handlers.append(
-            STORAGE_CONFIG_MAP[key]['handler'](hndlr_cfg)
-        )
-        log.info('Storage Handler %s created', key)
-
-    return handlers
-
-def init_storage_handler_from_env(handler_name: str) -> Optional[StorageHandlerBase]:
-    pass
-
-def init_storage_handler_from_ini(handler_name: str, cfg: ConfigParser) -> Optional[StorageHandlerBase]:
-    pass
-
-def init_storage_handlers(config: ConfigParser ) -> List[StorageHandlerBase]:
     storage_handlers = []
     for handler_name in STORAGE_CONFIG_MAP.keys():
-        storage_config = None
-        try:
-            if config:
-                storage_config = storage_handler_config_from_config_obj(config)
-            storage_config = storage_handler_conf_from_env(handler_name)  # Takes priority if both are defined
-        except (ValidationError, ValueError):
-            pass
-
-        if storage_config:
-            storage_handlers.append(
-                STORAGE_CONFIG_MAP[handler_name]['handler'](storage_config)
-            )
-            continue
+        storage_handler_from_ini = None
+        storage_handler_from_env = init_storage_handler_from_env(handler_name)
+        if ini:
+            storage_handler_from_ini = init_storage_handler_from_ini(handler_name, ini)
+        if storage_handler_from_env:
+            storage_handlers.append(storage_handler_from_env)
+        elif storage_handler_from_ini:
+            storage_handlers.append(storage_handler_from_ini)
 
     return storage_handlers
 
 
+def init_storage_handlers_from_ini(ini: ConfigParser) -> List[StorageHandlerBase]:
+    """
+    Returns all possible storage handlers with valid configs from ini
+    :rtype: List[StorageHandlerBase]
+    """
+    storage_handlers = []
+    for key in STORAGE_CONFIG_MAP.keys():
+        storage_handler = init_storage_handler_from_ini(key, ini)
+        if storage_handler:
+            storage_handlers.append(storage_handler)
 
-def storage_handler_config_from_config_obj(handler_name: str, config: ConfigParser) -> StorageConfig:
+    return storage_handlers
+
+
+def init_storage_handler_from_ini(handler_name: str, ini: ConfigParser) -> Optional[StorageHandlerBase]:
+    """
+    Take a handler name and construct the handler from ENV variables
+    :param handler_name: Name of handler to build
+    :return: StorageHandlerBase
+    :rtype: Optional[StorageHandlerBase]
+    """
+    try:
+        storage_config = storage_handler_config_from_ini(handler_name, ini)
+    except ValidationError:
+        log.error('Unable to build valid config from ENV for handler %s', handler_name)
+        return
+    except ValueError as e:
+        log.error('%s is not a valid storage handler name. Valid options are %s', handler_name, ", ".join(list(STORAGE_CONFIG_MAP.keys())))
+        return
+
+    return STORAGE_CONFIG_MAP[handler_name]['handler'](storage_config)
+
+
+def storage_handler_config_from_ini(handler_name: str, config: ConfigParser) -> StorageConfig:
     """
     Take a ConfigParser object and built a storage config from the sections
     :param handler_name: Name of handler to try and build config for
@@ -96,12 +82,47 @@ def storage_handler_config_from_config_obj(handler_name: str, config: ConfigPars
     """
     if handler_name not in STORAGE_CONFIG_MAP.keys():
         raise ValueError(
-            f'{handler_name} is not a valid storage handler name.  Valid options are {STORAGE_CONFIG_MAP.keys}')
+            f'{handler_name} is not a valid storage handler name.  Valid options are {", ".join(list(STORAGE_CONFIG_MAP.keys()))}')
 
     if handler_name.upper() not in config.sections():
         raise ValueError(f'No {handler_name.upper()} section in config')
 
     return STORAGE_CONFIG_MAP[handler_name]['config'](**dict(config.items(handler_name.upper())))
+
+
+def init_storage_handlers_from_env() -> List[StorageHandlerBase]:
+    """
+    Returns all possible storage handlers with valid configs from ENV Variables
+    :rtype: List[StorageHandlerBase]
+    """
+    storage_handlers = []
+    for key in STORAGE_CONFIG_MAP.keys():
+        storage_handler = init_storage_handler_from_env(key)
+        if storage_handler:
+            storage_handlers.append(storage_handler)
+
+    return storage_handlers
+
+
+def init_storage_handler_from_env(handler_name: str) -> Optional[StorageHandlerBase]:
+    """
+    Take a handler name and construct the handler from ENV variables
+    :param handler_name: Name of handler to build
+    :return: StorageHandlerBase
+    :rtype: Optional[StorageHandlerBase]
+    """
+    try:
+        storage_config = storage_handler_conf_from_env(handler_name)
+    except ValidationError:
+        log.error('Unable to build valid config from ENV for handler %s', handler_name)
+        return
+    except ValueError as e:
+        log.error('%s is not a valid storage handler name. Valid options are %s', handler_name,
+                  ", ".join(list(STORAGE_CONFIG_MAP.keys())))
+        return
+
+    return STORAGE_CONFIG_MAP[handler_name]['handler'](storage_config)
+
 
 def storage_handler_conf_from_env(handler_name: str) -> StorageConfig:
     """
@@ -115,7 +136,7 @@ def storage_handler_conf_from_env(handler_name: str) -> StorageConfig:
     """
     if handler_name not in STORAGE_CONFIG_MAP.keys():
         raise ValueError(
-            f'{handler_name} is not a valid storage handler name.  Valid options are {STORAGE_CONFIG_MAP.keys}')
+            f'{handler_name} is not a valid storage handler name.  Valid options are {", ".join(list(STORAGE_CONFIG_MAP.keys()))}')
 
     config_vals = {}
     for key, value in os.environ.items():

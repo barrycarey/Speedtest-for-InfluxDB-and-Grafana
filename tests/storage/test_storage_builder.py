@@ -6,96 +6,20 @@ from unittest.mock import patch
 from pydantic import ValidationError
 
 from speedmon.config.config_manager import ConfigManager
-from speedmon.storage.constants import ValidHandlerNames
 from speedmon.storage.graphite.graphite_config import GraphiteConfig
+from speedmon.storage.graphite.graphite_storage_handler import GraphiteStorageHandler
 from speedmon.storage.influxv1.influxv1_config import InfluxV1Config
 from speedmon.storage.influxv1.influxv1_storage_handler import InfluxV1StorageHandler
 from speedmon.storage.influxv2.influxv2_config import InfluxV2Config
 from speedmon.storage.influxv2.influxv2_storage_handler import InfluxV2StorageHandler
-from speedmon.storage.storage_builder import init_storage_handlers_from_cfg, storage_handler_conf_from_env, \
-    storage_handler_config_from_config_obj
+from speedmon.storage.storage_builder import storage_handler_conf_from_env, \
+    init_storage_handler_from_env, init_storage_handlers_from_env, \
+    init_storage_handler_from_ini, init_storage_handlers_from_ini, storage_handler_config_from_ini
+from speedmon.storage.storage_handler_base import StorageHandlerBase
 
 
 class TestStorageBuilder(TestCase):
 
-    def test_init_storage_handlers_no_configs(self):
-        config = ConfigParser()
-        config.read_dict({
-            'GENERAL': {
-                'timeout': 1
-            }
-        })
-        self.assertEqual(0, len(init_storage_handlers_from_cfg(config)))
-
-    def test_init_storage_handlers_not_mapped(self):
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_TEST': {
-                'timeout': 1
-            }
-        })
-        self.assertEqual(0, len(init_storage_handlers_from_cfg(config)))
-
-    @patch('speedmon.storage.storage_builder.filter_dead_storage_handlers')
-    def test_init_storage_handlers_influxv1_init_valid_config(self, mock_init_handler):
-        mock_init_handler.return_value = True
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_INFLUXV1': {
-                'url': 'test',
-                'port': '8086',
-                'database': 'test',
-                'username': 'test',
-                'password': 'test',
-                'ssl': 'false',
-                'verify_ssl': 'false'
-            }
-        })
-        result = init_storage_handlers_from_cfg(config)
-        self.assertEqual(1, len(result))
-        self.assertIsInstance(result[0], InfluxV1StorageHandler)
-
-    @patch('speedmon.storage.storage_builder.filter_dead_storage_handlers')
-    def test_init_storage_handlers_influxv1_init_invalid_config(self, mock_init_handler):
-        mock_init_handler.return_value = True
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_INFLUXV1': {
-
-            }
-        })
-        result = init_storage_handlers_from_cfg(config)
-        self.assertEqual(0, len(result))
-
-
-    @patch('speedmon.storage.storage_builder.filter_dead_storage_handlers')
-    def test_init_storage_handlers_influxv2_init_valid_config(self, mock_init_handler):
-        mock_init_handler.return_value = True
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_INFLUXV2': {
-                'url': 'test',
-                'token': 'test',
-                'org': 'test',
-                'bucket': 'test',
-                'verify_ssl': 'false'
-            }
-        })
-        result = init_storage_handlers_from_cfg(config)
-        self.assertEqual(1, len(result))
-        self.assertIsInstance(result[0], InfluxV2StorageHandler)
-
-    @patch('speedmon.storage.storage_builder.filter_dead_storage_handlers')
-    def test_init_storage_handlers_influxv2_init_invalid_config(self, mock_init_handler):
-        mock_init_handler.return_value = True
-        config = ConfigParser()
-        config.read_dict({
-            'STORAGE_INFLUXV2': {
-
-            }
-        })
-        result = init_storage_handlers_from_cfg(config)
-        self.assertEqual(0, len(result))
 
     def test_storage_handler_conf_from_env_influxv1(self):
         os.environ['INFLUXv1_NAME'] = 'influxv1 test'
@@ -150,28 +74,129 @@ class TestStorageBuilder(TestCase):
         with self.assertRaises(ValueError):
             storage_handler_conf_from_env('dummy_handler')
 
-    def test_storage_handler_config_from_config_obj_invalid_handler_name(self):
-        config = ConfigManager(config_vals={'GENERAL': {'Delay': 1}})
-        with self.assertRaises(ValueError):
-            storage_handler_config_from_config_obj('dummy_handler', config.loaded_config)
+    def test_storage_handler_config_from_ini_odd_casing_value_names(self):
+        ini = ConfigParser()
+        ini.read_dict({
+            'GRAPHITE': {
+                'uRl': 'localhost'
+            }
+        })
+        r = storage_handler_config_from_ini('graphite', ini)
+        self.assertIsInstance(r, GraphiteConfig)
 
-    def test_storage_handler_config_from_config_obj_no_storage_settings(self):
-        config = ConfigManager(config_vals={'GENERAL': {'Delay': 1}})
+    def test_storage_handler_config_from_ini_invalid_handler_name(self):
+        ini = ConfigParser()
+        ini.read_dict({'GENERAL': {'Delay': 1}})
         with self.assertRaises(ValueError):
-            storage_handler_config_from_config_obj('influxv2', config.loaded_config)
+            storage_handler_config_from_ini('dummy_handler', ini)
 
-    def test_storage_handler_config_from_config_obj_valid_config(self):
-        config_vals = {'GRAPHITE': {
+    def test_storage_handler_config_from_ini_no_storage_settings(self):
+        ini = ConfigParser()
+        ini.read_dict({'GENERAL': {'Delay': 1}})
+        with self.assertRaises(ValueError):
+            storage_handler_config_from_ini('influxv2', ini)
+
+    def test_storage_handler_config_from_ini_valid_config(self):
+        ini = ConfigParser()
+        ini.read_dict({'GRAPHITE': {
             'url': 'dummyhost'
-        }}
-        config = ConfigManager(config_vals=config_vals)
-        r = storage_handler_config_from_config_obj('graphite', config.loaded_config)
+        }})
+        r = storage_handler_config_from_ini('graphite', ini)
         self.assertIsInstance(r, GraphiteConfig)
         self.assertEqual('dummyhost', r.url)
 
-    def test_storage_handler_config_from_config_obj_missing_required(self):
-        config = ConfigManager(config_vals={'GRAPHITE': {}})
+    def test_storage_handler_config_from_ini_missing_required(self):
+        ini = ConfigParser()
+        ini.read_dict({'GRAPHITE': {}})
         with self.assertRaises(ValidationError):
-            storage_handler_config_from_config_obj('graphite', config.loaded_config)
+            storage_handler_config_from_ini('graphite', ini)
 
+    def test_init_storage_handler_from_env_invalid_handler_name(self):
+        self.assertIsNone(init_storage_handler_from_env('dummy'))
 
+    def test_init_storage_handler_from_env_invalid_config(self):
+        os.environ['GRAPHITE_PORT'] = '2003'
+        r = init_storage_handler_from_env('graphite')
+        del os.environ['GRAPHITE_PORT']
+        self.assertIsNone(r)
+
+    def test_init_storage_handler_from_env_valid_config(self):
+        os.environ['GRAPHITE_URL'] = 'localhost'
+        r = init_storage_handler_from_env('graphite')
+        del os.environ['GRAPHITE_URL']
+        self.assertIsInstance(r, StorageHandlerBase)
+        self.assertIsInstance(r, GraphiteStorageHandler)
+
+    def test_init_storage_handlers_from_env_invalid_config(self):
+        r = init_storage_handlers_from_env()
+        self.assertEqual(len(r), 0)
+
+    def test_init_storage_handlers_from_env_invalid(self):
+        os.environ['GRAPHITE_URL'] = 'localhost'
+        r = init_storage_handlers_from_env()
+        del os.environ['GRAPHITE_URL']
+        self.assertEqual(len(r), 1)
+        self.assertIsInstance(r[0], GraphiteStorageHandler)
+
+    def test_init_storage_handlers_from_env_create_multiple(self):
+        os.environ['GRAPHITE_URL'] = 'localhost'
+        os.environ['INFLUXV2_URL'] = 'localhost'
+        os.environ['INFLUXV2_TOKEN'] = 'abc'
+        os.environ['INFLUXV2_ORG'] = 'test_org'
+        os.environ['INFLUXV2_BUCKET'] = 'test_bucket'
+        r = init_storage_handlers_from_env()
+        del os.environ['GRAPHITE_URL']
+        del os.environ['INFLUXV2_URL']
+        del os.environ['INFLUXV2_TOKEN']
+        del os.environ['INFLUXV2_ORG']
+        del os.environ['INFLUXV2_BUCKET']
+        self.assertEqual(len(r), 2)
+        self.assertIsInstance(r[1], GraphiteStorageHandler)
+        self.assertIsInstance(r[0], InfluxV2StorageHandler)
+
+    def test_init_storage_handler_from_ini_invalid_handler_name(self):
+        self.assertIsNone(init_storage_handler_from_ini('dummy', ConfigParser()))
+
+    def test_init_storage_handler_from_ini_invalid_config(self):
+        ini = ConfigParser()
+        ini.read_dict({})
+        r = init_storage_handler_from_ini('graphite', ini)
+        self.assertIsNone(r)
+
+    def test_init_storage_handler_from_ini_valid_config(self):
+        ini = ConfigParser()
+        ini.read_dict({
+            'GRAPHITE': {
+                'URL': 'localhost'
+            }
+        })
+        r = init_storage_handler_from_ini('graphite', ini)
+        self.assertIsInstance(r, StorageHandlerBase)
+        self.assertIsInstance(r, GraphiteStorageHandler)
+
+    def test_init_storage_handlers_from_ini_create_multiple(self):
+        ini = ConfigParser()
+        ini.read_dict({
+            'GRAPHITE': {
+                'URL': 'localhost'
+            },
+            'INFLUXV2': {
+                'URL': 'localhost',
+                'Token': 'abc',
+                'Org': 'test_org',
+                'Bucket': 'test_bucket'
+            }
+        })
+        r = init_storage_handlers_from_ini(ini)
+        self.assertEqual(len(r), 2)
+        self.assertIsInstance(r[1], GraphiteStorageHandler)
+        self.assertIsInstance(r[0], InfluxV2StorageHandler)
+
+    def test_init_storage_handlers_from_ini_no_configs(self):
+        ini = ConfigParser()
+        ini.read_dict({
+            'GENERAL': {
+                'timeout': 1
+            }
+        })
+        self.assertEqual(0, len(init_storage_handlers_from_ini(ini)))
