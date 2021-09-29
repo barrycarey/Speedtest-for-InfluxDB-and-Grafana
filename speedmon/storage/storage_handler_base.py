@@ -15,7 +15,7 @@ class StorageHandlerBase:
         self.active = False
         self.write_failures = 0
         self.client = self._get_storage_client()
-        log.info('Build storage handler %s', self.storage_config.name)
+        log.info('Built storage handler %s', self.storage_config.name)
 
     def _get_storage_client(self):
         """

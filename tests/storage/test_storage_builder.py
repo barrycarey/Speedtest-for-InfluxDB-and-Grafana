@@ -14,7 +14,8 @@ from speedmon.storage.influxv2.influxv2_config import InfluxV2Config
 from speedmon.storage.influxv2.influxv2_storage_handler import InfluxV2StorageHandler
 from speedmon.storage.storage_builder import storage_handler_conf_from_env, \
     init_storage_handler_from_env, init_storage_handlers_from_env, \
-    init_storage_handler_from_ini, init_storage_handlers_from_ini, storage_handler_config_from_ini
+    init_storage_handler_from_ini, init_storage_handlers_from_ini, storage_handler_config_from_ini, \
+    storage_handler_name_in_env_vars
 from speedmon.storage.storage_handler_base import StorageHandlerBase
 
 
@@ -29,6 +30,12 @@ class TestStorageBuilder(TestCase):
         os.environ['INFLUXv1_USER'] = 'test_user'
         os.environ['INFLUXv1_PASSWORD'] = 'test_password'
         r = storage_handler_conf_from_env('influxv1')
+        del os.environ['INFLUXv1_NAME']
+        del os.environ['INFLUXv1_URL']
+        del os.environ['INFLUXv1_PORT']
+        del os.environ['INFLUXv1_DATABASE_NAME']
+        del os.environ['INFLUXv1_USER']
+        del os.environ['INFLUXv1_PASSWORD']
         self.assertIsInstance(r, InfluxV1Config)
         self.assertEqual(r.user, 'test_user')
         self.assertEqual(r.password, 'test_password')
@@ -200,3 +207,12 @@ class TestStorageBuilder(TestCase):
             }
         })
         self.assertEqual(0, len(init_storage_handlers_from_ini(ini)))
+
+    def test_storage_handler_name_in_env_vars_no(self):
+        self.assertFalse(storage_handler_name_in_env_vars('influxv1'))
+
+    def test_storage_handler_name_in_env_vars_yes(self):
+        os.environ['INFLUXV1_URL'] = 'localhost'
+        r = storage_handler_name_in_env_vars('influxv1')
+        del os.environ['INFLUXV1_URL']
+        self.assertTrue(r)

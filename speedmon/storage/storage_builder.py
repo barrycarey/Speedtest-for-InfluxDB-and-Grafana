@@ -36,7 +36,7 @@ def init_storage_handlers(ini: ConfigParser = None) -> List[StorageHandlerBase]:
         elif storage_handler_from_ini:
             storage_handlers.append(storage_handler_from_ini)
 
-    return storage_handlers
+    return filter(filter_dead_storage_handlers, storage_handlers)
 
 
 def init_storage_handlers_from_ini(ini: ConfigParser) -> List[StorageHandlerBase]:
@@ -60,6 +60,10 @@ def init_storage_handler_from_ini(handler_name: str, ini: ConfigParser) -> Optio
     :return: StorageHandlerBase
     :rtype: Optional[StorageHandlerBase]
     """
+    if handler_name.upper() not in ini.sections():
+        log.info('No config section defined for %s in INI', handler_name.upper())
+        return None
+
     try:
         storage_config = storage_handler_config_from_ini(handler_name, ini)
     except ValidationError:
@@ -72,11 +76,11 @@ def init_storage_handler_from_ini(handler_name: str, ini: ConfigParser) -> Optio
     return STORAGE_CONFIG_MAP[handler_name]['handler'](storage_config)
 
 
-def storage_handler_config_from_ini(handler_name: str, config: ConfigParser) -> StorageConfig:
+def storage_handler_config_from_ini(handler_name: str, ini: ConfigParser) -> StorageConfig:
     """
     Take a ConfigParser object and built a storage config from the sections
     :param handler_name: Name of handler to try and build config for
-    :param config: ConfigParser Object
+    :param ini: ConfigParser Object
     :return: StorageConfig
     :rtype: StorageConfig
     """
@@ -84,10 +88,10 @@ def storage_handler_config_from_ini(handler_name: str, config: ConfigParser) -> 
         raise ValueError(
             f'{handler_name} is not a valid storage handler name.  Valid options are {", ".join(list(STORAGE_CONFIG_MAP.keys()))}')
 
-    if handler_name.upper() not in config.sections():
+    if handler_name.upper() not in ini.sections():
         raise ValueError(f'No {handler_name.upper()} section in config')
 
-    return STORAGE_CONFIG_MAP[handler_name]['config'](**dict(config.items(handler_name.upper())))
+    return STORAGE_CONFIG_MAP[handler_name]['config'](**dict(ini.items(handler_name.upper())))
 
 
 def init_storage_handlers_from_env() -> List[StorageHandlerBase]:
@@ -111,6 +115,8 @@ def init_storage_handler_from_env(handler_name: str) -> Optional[StorageHandlerB
     :return: StorageHandlerBase
     :rtype: Optional[StorageHandlerBase]
     """
+    if not storage_handler_name_in_env_vars(handler_name):
+        return
     try:
         storage_config = storage_handler_conf_from_env(handler_name)
     except ValidationError:
@@ -144,3 +150,10 @@ def storage_handler_conf_from_env(handler_name: str) -> StorageConfig:
             new_key = key.replace(f'{handler_name.upper()}_', '').lower()
             config_vals[new_key] = value
     return STORAGE_CONFIG_MAP[handler_name]['config'](**config_vals)
+
+
+def storage_handler_name_in_env_vars(handler_name: str) -> bool:
+    for key in os.environ.keys():
+        if handler_name in key.lower():
+            return True
+    return False

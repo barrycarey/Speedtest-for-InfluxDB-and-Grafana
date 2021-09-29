@@ -7,13 +7,16 @@ from speedmon.common.logging.log import configure_logger
 from speedmon.common.speedtest_cli_validation import check_for_speedtest_cli, attempt_to_install_speedtest_cli
 from speedmon.common.utils import run_speed_test
 from speedmon.config.config_manager import ConfigManager
+from speedmon.storage.storage_builder import init_storage_handlers, \
+    filter_dead_storage_handlers
 
 log = configure_logger(name='speedmon')
 
+config = None
 if os.getenv('SPEEDTEST_CONFIG', None):
     config = ConfigManager(config_file=os.getenv('SPEEDTEST_CONFIG'))
-else:
-    config = ConfigManager(config_vals={'GENERAL': {'Delay', os.getenv('DELAY', 300)}})
+
+
 
 if not check_for_speedtest_cli():
     log.error('Unable to find Speedtest CLI.  Attempting to install')
@@ -22,7 +25,9 @@ if not check_for_speedtest_cli():
     except SpeedtestInstallFailure:
         sys.exit(1)
 
-storage_handlers = None
+
+storage_handlers = init_storage_handlers(ini=config.loaded_config)
+storage_handlers = list(filter(filter_dead_storage_handlers, storage_handlers))
 
 if not storage_handlers:
     log.error('No active storage handlers available ')
