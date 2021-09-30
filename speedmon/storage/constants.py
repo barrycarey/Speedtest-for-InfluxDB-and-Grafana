@@ -1,5 +1,3 @@
-from enum import Enum
-
 from speedmon.storage.graphite.graphite_config import GraphiteConfig
 from speedmon.storage.graphite.graphite_storage_handler import GraphiteStorageHandler
 from speedmon.storage.influxv1.influxv1_config import InfluxV1Config
@@ -22,24 +20,3 @@ STORAGE_CONFIG_MAP = {
     },
 
 }
-
-storage_env_map = {
-    'influxv1': [
-        'INFLUXV1_NAME',
-        'INFLUXV1_URL',
-        'INFLUXV1_PORT',
-        'INFLUXV1_DATABASE',
-        'INFLUXV1_USERNAME',
-        'INFLUXV1_PASSWORD',
-        'INFLUXV1_SSL',
-        'INFLUXV1_VERIFY_SSL'
-    ],
-    'influxv2': [
-        'INFLUXv2_'
-    ]
-}
-
-class ValidHandlerNames(Enum):
-    InfluxV1 = 'influxv1'
-    Influxv2 = 'influxv2'
-    Graphite = 'graphite'

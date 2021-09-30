@@ -36,7 +36,7 @@ def init_storage_handlers(ini: ConfigParser = None) -> List[StorageHandlerBase]:
         elif storage_handler_from_ini:
             storage_handlers.append(storage_handler_from_ini)
 
-    return filter(filter_dead_storage_handlers, storage_handlers)
+    return storage_handlers
 
 
 def init_storage_handlers_from_ini(ini: ConfigParser) -> List[StorageHandlerBase]:

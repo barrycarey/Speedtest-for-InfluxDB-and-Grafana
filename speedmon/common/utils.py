@@ -2,10 +2,12 @@ import json
 import logging
 import os
 import subprocess
+from configparser import ConfigParser
 from typing import Dict, List
 
 from speedmon.common.exceptions import SpeedtestRunError
 from speedmon.common.speed_test_results import SpeedTestResult
+from speedmon.storage.storage_handler_base import StorageHandlerBase
 
 log = logging.getLogger(__name__)
 
@@ -62,3 +64,9 @@ def os_name() -> str:
     :rtype: str
     """
     return os.name
+
+
+def save_results(storage_handlers: List[StorageHandlerBase], result: SpeedTestResult) -> None:
+    for handler in storage_handlers:
+        if handler.active:
+            handler.save_results(result)
