@@ -22,46 +22,43 @@ Docker, Windows, and Linux are supported.  Linux users are required to install t
 
 ## Configuration
 
-Speedmon can be configured from a configuration file, environment variables or both.  If the same setting is defined in both places the ENV variable takes priority
+Speedmon can be configured from a configuration file or environment variables.  
 
 ### Configuring From .ini
 
-When initializing Speedmon looks for the SPEEDTEST_CONFIG ENV Variable to know what config file to load
+When initializing Speedmon looks for the SPEEDTEST_CONFIG ENV Variable to know what config file to load.  If this variable 
+is not provided, Speedmon will attempt to load settings from ENV.
 
 Storage backends are dynamically loaded based on what is in the config file. You can safely delete the sections for backends not in use.  
 
-#### GENERAL
-|Key            |Description                                                                                                         |
-|:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Delay          |Delay between runs                                                                                                  |
-#### STORAGE_INFLUXV1
-|Key            |Description                                                                                                         |
-|:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Url            |URL of InfluxDB server                                                                                     |
-|Port           |InfluxDB port to connect to.  8086 in most cases                                                                    |
-|Database       |Database to write collected stats to                                                                                |
-|Username       |User that has access to the database                                                                                |
-|Password       |Password for above user                                                                                             |
-|SSL       | Use SSL Connection                                                                                        |
-|Verify SSL       |Validate SSL cert    
-#### STORAGE_INFLUXV2
-|Key            |Description                                                                                                         |
-|:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Url            |URL of InfluxDB server                                                                                     |
-|Token       | API token to use                                                                                |
-|Bucket       |Bucket to user                                                                                            |
-|Org       | Org to use                                                                                        |
-|Verify SSL       |Validate SSL cert  |
-#### STORAGE_GRAPHITE
-|Key            |Description                                                                                                         |
-|:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Url            |URL of Graphite server                                                                                     |
-|Prefix       | Metric Prefix                                                                               |
-|Port       | Graphite Port                                                                                          |
-#### SPEEDTEST
-|Key            |Description                                                                                                         |
-|:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Server         |Comma sperated list of servers.  Leave blank for auto                                                            |
+```buildoutcfg
+[INFLUXV1]
+Name = Whatever You want
+Url = http://localhost
+Port = 8086
+User = 
+Password =
+SSL = False
+Verify SSL = False
+```
+
+```buildoutcfg
+[INFLUXV2]
+Name = Whatever You want
+Url = http://localhost
+Token =
+Org = 
+Bucket = 
+Verify SSL = False
+```
+
+```buildoutcfg
+[Graphite]
+Name = Whatever You want
+Url = http://localhost
+Port = 2003
+Prefix = speedtest
+```
 
 ### Configuring From ENV
 

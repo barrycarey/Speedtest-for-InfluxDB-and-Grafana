@@ -3,7 +3,7 @@ import logging
 import os
 import subprocess
 from configparser import ConfigParser
-from typing import Dict, List
+from typing import Dict, List, NoReturn
 
 from speedmon.common.exceptions import SpeedtestRunError
 from speedmon.common.speed_test_results import SpeedTestResult
@@ -34,6 +34,21 @@ def build_speedtest_command_line(server: int = None) -> List:
         proc_args += ['-s', server]
     return proc_args
 
+def run_speedtest_with_default_server(storage_handlers: List[StorageHandlerBase]) -> NoReturn:
+    try:
+        results = run_speed_test()
+    except SpeedtestRunError as e:
+        log.error('Problem running speed test: %s', e)
+        return
+    save_results(storage_handlers, results)
+
+def run_speedtest_with_servers(storage_handlers: List[StorageHandlerBase], servers: List[str]) -> NoReturn:
+    try:
+        results = run_speed_test()
+    except SpeedtestRunError as e:
+        log.error('Problem running speed test: %s', e)
+        return
+    save_results(storage_handlers, results)
 
 def run_speed_test(server: int = None) -> SpeedTestResult:
     """
