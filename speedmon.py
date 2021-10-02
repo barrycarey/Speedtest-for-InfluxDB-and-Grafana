@@ -18,8 +18,11 @@ log = configure_logger(name='speedmon')
 if __name__ == '__main__':
 
     config = None
+
     if os.getenv('SPEEDTEST_CONFIG', None):
         config = ConfigManager(config_file=os.getenv('SPEEDTEST_CONFIG'))
+    else:
+        config = ConfigManager()
 
     if not check_for_speedtest_cli():
         log.error('Unable to find Speedtest CLI.  Attempting to install')
@@ -28,20 +31,15 @@ if __name__ == '__main__':
         except SpeedtestInstallFailure:
             sys.exit(1)
 
-    if config:
-        storage_handlers = init_storage_handlers(ini=config.loaded_config)
-    else:
-        storage_handlers = init_storage_handlers()
-
+    storage_handlers = init_storage_handlers(ini=config.loaded_config)
     storage_handlers = list(filter(filter_dead_storage_handlers, storage_handlers))
 
     if not storage_handlers:
         log.error('No active storage handlers available ')
 
-    servers = []
     while True:
-        if servers:
-            run_speedtest_with_servers(storage_handlers, servers)
+        if config.servers:
+            run_speedtest_with_servers(storage_handlers, config.servers)
         else:
             run_speedtest_with_default_server(storage_handlers)
 

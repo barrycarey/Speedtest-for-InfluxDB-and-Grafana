@@ -27,14 +27,14 @@ def init_storage_handlers(ini: ConfigParser = None) -> List[StorageHandlerBase]:
     """
     storage_handlers = []
     for handler_name in STORAGE_CONFIG_MAP.keys():
-        storage_handler_from_ini = None
         storage_handler_from_env = init_storage_handler_from_env(handler_name)
-        if ini:
-            storage_handler_from_ini = init_storage_handler_from_ini(handler_name, ini)
         if storage_handler_from_env:
             storage_handlers.append(storage_handler_from_env)
-        elif storage_handler_from_ini:
-            storage_handlers.append(storage_handler_from_ini)
+            continue
+        if ini:
+            storage_handler_from_ini = init_storage_handler_from_ini(handler_name, ini)
+            if storage_handler_from_ini:
+                storage_handlers.append(storage_handler_from_ini)
 
     return storage_handlers
 

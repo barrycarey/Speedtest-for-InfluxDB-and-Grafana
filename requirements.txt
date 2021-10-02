@@ -1,7 +1,6 @@
-influxdb
-requests
-configparser
-influxdb-client
-prometheus-client
-graphyte
-pydantic
+influxdb==5.3.1
+requests==2.26.0
+configparser==5.0.2
+influxdb-client==1.21.0
+graphyte==1.7.0
+pydantic==1.8.2

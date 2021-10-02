@@ -85,3 +85,24 @@ def save_results(storage_handlers: List[StorageHandlerBase], result: SpeedTestRe
     for handler in storage_handlers:
         if handler.active:
             handler.save_results(result)
+
+def format_influxdb_results(data: SpeedTestResult) -> List[Dict]:
+    return [
+        {
+            'measurement': 'speed_test_results',
+            'fields': {
+                'download': data.download,
+                'upload': data.upload,
+                'ping': data.latency,
+                'jitter': data.jitter,
+                'packetloss': data.packetloss,
+            },
+            'tags': {
+                'server_id': data.server_id,
+                'server_name': data.server_name,
+                'server_country': data.server_country,
+                'server_location': data.server_location
+            }
+        }
+    ]
+

@@ -6,6 +6,7 @@ from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from requests.exceptions import ConnectTimeout, ConnectionError, InvalidURL
 
 from speedmon.common.speed_test_results import SpeedTestResult
+from speedmon.common.utils import format_influxdb_results
 from speedmon.storage.influxv1.influxv1_config import InfluxV1Config
 from speedmon.storage.storage_handler_base import StorageHandlerBase
 
@@ -69,22 +70,4 @@ class InfluxV1StorageHandler(StorageHandlerBase):
         log.debug('Data written to Influx DB V1')
 
     def format_results(self, data: SpeedTestResult) -> List[Dict]:
-        input_points = [
-            {
-                'measurement': 'speed_test_results',
-                'fields': {
-                    'download': data.download,
-                    'upload': data.upload,
-                    'ping': data.latency,
-                    'jitter': data.jitter,
-                    'packetloss': data.packetloss,
-                },
-                'tags': {
-                    'server_id': data.server_id,
-                    'server_name': data.server_name,
-                    'server_country': data.server_country,
-                    'server_location': data.server_location
-                }
-            }
-        ]
-        return input_points
+        return format_influxdb_results(data)
