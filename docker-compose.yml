@@ -1,7 +1,7 @@
 version: '2'
 services:
   speedtest:
-    image: barrycarey/speedtest-for-influxdb-and-grafana
+    image: barrycarey/speedmon:latest
     container_name: speedtest
     volumes:
       - ./config.ini:/src/config.ini

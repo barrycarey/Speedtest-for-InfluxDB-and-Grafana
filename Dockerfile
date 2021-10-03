@@ -1,4 +1,4 @@
-FROM python:3.9.7-buster
+FROM python:3.9.7-slim-bullseye
 MAINTAINER Barry Carey <mcarey66@gmail.com>
 
 VOLUME /src/

@@ -22,7 +22,50 @@ Docker, Windows, and Linux are supported.  Linux users are required to install t
 
 ## Configuration
 
-Speedmon can be configured from a configuration file or environment variables.  
+Speedmon can be configured from a configuration file or environment variables.  The preferred method is via ENV.
+
+### <a name="envvars"></a>Configuring From ENV
+
+You only need to include the variables for the storage backends you wish to use. 
+
+#### Influx v1
+
+```
+--Required--
+INFLUXV1_URL
+INFLUXV1_DATABASE_NAME
+--Optional--
+INFLUXV1_NAME
+INFLUXV1_PORT
+INFLUXV1_USER
+INFLUXV1_PASSWORD
+INFLUXV1_VERIFY_SSL
+INFLUXV1_SSL
+```
+
+#### Influx v2
+
+```
+--Required--
+INFLUXV2_URL
+INFLUXV2_TOKEN
+INFLUXV2_ORG
+INFLUXV2_BUCKET
+
+INFLUXV2_NAME
+INFLUXV2_VERIFY_SSL
+```
+
+#### Graphite v2
+
+```
+--Required--
+GRAPHITE_URL
+GRAPHITE_PREFIX
+--Optional--
+GRAPHITE_NAME
+GRAPHITE_PORT
+```
 
 ### Configuring From .ini
 
@@ -60,42 +103,70 @@ Port = 2003
 Prefix = speedtest
 ```
 
-### Configuring From ENV
 
-#### Influx v1
-
-```
-INFLUXV1_NAME
-INFLUXV1_URL
-INFLUXV1_PORT
-INFLUXV1_DATABASE_NAME
-INFLUXV1_USER
-INFLUXV1_PASSWORD
-INFLUXV1_VERIFY_SSL
-INFLUXV1_SSL
-```
-
-#### Influx v2
-
-```
-INFLUXV2_NAME
-INFLUXV2_URL
-INFLUXV2_TOKEN
-INFLUXV2_ORG
-INFLUXV2_BUCKET
-INFLUXV2_VERIFY_SSL
-```
-
-#### Graphite v2
-
-```
-GRAPHITE_NAME
-GRAPHITE_URL
-GRAPHITE_PREFIX
-GRAPHITE_PORT
-
-```
 ## Usage
+
+### With Docker (Preferred)
+
+[See ENV Variable List For Your Storage Backend](#head1234)
+
+```bash
+docker run -d \
+--name="speedtest" \
+--restart="always" \
+--env INFLUXV2_URL=http://example.com \
+--env INFLUXV2_TOKEN=my-long-token \
+--env INFLUXV2_ORG=my-org \
+--env INFLUXV2_BUCKET=speedtests \
+--env DELAY=360 \
+barrycarey/speedmon:latest
+```
+
+#### Using Optional Configuration File 
+
+If you do not want to configure Speedmon with ENV variables you can us configuration file
+
+1. Make a directory to hold the config.ini file. Navigate to that directory and download the sample config.ini in this repo.
+```bash
+mkdir speedmon
+curl -o speedmon/config.ini https://raw.githubusercontent.com/barrycarey/Speedmon/master/config.ini
+cd speedmon
+```
+2. Modify the config file with your influxdb settings.
+```bash
+nano config.ini
+```
+
+Remove the unneeded storage backend sections.  Modify the remaining settings to fit our requirements
+
+```buildoutcfg
+[GENERAL]
+Delay = 360
+# Leave blank to auto pick server
+Servers =
+
+
+[INFLUXV2]
+Name = Influx v2
+URL = = http://localhost:8086
+Token = abc12345676
+Org = my-org
+Bucket = speedtests
+Verify_SSL = False
+
+
+```
+
+3. Run the container, pointing to the directory with the config file. This should now pull the image from Docker hub.
+
+```bash
+docker run -d \
+--name="speedtest" \
+-v config.ini:/src/config.ini \
+--restart="always" \
+--env SPEEDTEST_CONFIG=config.ini
+barrycarey/speedmon:latest
+```
 
 Before the first use run pip3 install -r requirements.txt
 
@@ -103,59 +174,12 @@ Enter your desired information in config.ini
 
 Run influxspeedtest.py
 
-**Custom Config File Name**
-
-If you wish to use a config file by a different name set an ENV Variable called influxspeedtest.  The value you set will be the config file that's used. 
-  
-
-***Requirements***
-
-Python 3+
-
-You will need the influxdb library installed to use this - [Found Here](https://github.com/influxdata/influxdb-python)
-You will need the speedtest-cli library installed to use this - [Found Here](https://github.com/sivel/speedtest-cli)
-
-## Docker Setup
-
-1. Install [Docker](https://www.docker.com/)
-
-2. Make a directory to hold the config.ini file. Navigate to that directory and download the sample config.ini in this repo.
-```bash
-mkdir speedtest
-curl -o speedtest/config.ini https://raw.githubusercontent.com/barrycarey/Speedtest-for-InfluxDB-and-Grafana/master/config.ini
-cd speedtest
-```
-
-3. Modify the config file with your influxdb settings.
-```bash
-nano config.ini
-```
-Modify the 'Address =' line include the ip or hostname of your influxdb instance.
-Example:
-```bash
-Address = 10.13.14.200
-```
-
-4. Run the container, pointing to the directory with the config file. This should now pull the image from Docker hub. You can do this by either running docker run or by using docker-compose.
- 1. The docker run option.
-```bash
-docker run -d \
---name="speedtest" \
--v config.ini:/src/config.ini \
---restart="always" \
-barrycarey/speedtest-for-influxdb-and-grafana
-```
- 2. The docker-compose option
- ```bash
- curl -O https://raw.githubusercontent.com/barrycarey/Speedtest-for-InfluxDB-and-Grafana/master/docker-compose.yml docker-compose.yml
- docker-compose up -d
- ```
 
 ## Adding Additional Backends
 If you wish to contribute support for additional backends the process is straight forward. 
 
-Add a new Package under speedmon.storage.  Create a new Storage Handler that inherits from StorageHandlerBase.  Create a new config that inherits from StorageConfig.  Add the new storage backed to speedmon.storage.storage_config_map
+Add a new Package under ```speedmon.storage```.  Create a new Storage Handler that inherits from ```StorageHandlerBase```.  Create a new config that inherits from ```StorageConfig```.  Add the new storage backed to ```speedmon.storage.storage_config_map```
 
-Add the example config options to config.ini and name the section [STORAGE_NAME].  
+Add the example config options to config.ini and name the section ```[HANDLERNAME]```. This must match the name you specified in the map
 
-The handler will automatically be loaded and initialized if the config options are available in the config.ini
+The handler will automatically be loaded and initialized if the config options are available in the config.ini or ENV vars
