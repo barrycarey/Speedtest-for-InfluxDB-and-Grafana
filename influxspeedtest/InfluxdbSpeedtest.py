@@ -7,10 +7,11 @@ from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from requests import ConnectTimeout, ConnectionError
 
 from influxspeedtest.common import log
+from influxspeedtest.common.utils import retry
 from influxspeedtest.config import config
 
 
-class InfluxdbSpeedtest():
+class InfluxdbSpeedtest:
 
     def __init__(self):
 
@@ -18,6 +19,7 @@ class InfluxdbSpeedtest():
         self.speedtest = None
         self.results = None
 
+    @retry(exception=ConnectionError, n_tries=config.influx_retry_count, delay=config.influx_retry_delay, backoff=config.influx_retry_backoff)
     def _get_influx_connection(self):
         """
         Create an InfluxDB connection and test to make sure it works.
@@ -43,12 +45,11 @@ class InfluxdbSpeedtest():
         except (ConnectTimeout, InfluxDBClientError, ConnectionError) as e:
             if isinstance(e, ConnectTimeout):
                 log.critical('Unable to connect to InfluxDB at the provided address (%s)', config.influx_address)
-            elif e.code == 401:
-                log.critical('Unable to connect to InfluxDB with provided credentials')
+            elif isinstance(e, InfluxDBClientError):
+                log.critical('Unable to connect to InfluxDB with error code: %s', e.code)
             else:
                 log.critical('Failed to connect to InfluxDB for unknown reason')
-
-            sys.exit(1)
+            raise e
 
         return influx
 
@@ -65,7 +66,7 @@ class InfluxdbSpeedtest():
         if server is None:
             server = []
         else:
-            server = server.split() # Single server to list
+            server = server.split()  # Single server to list
 
         try:
             self.speedtest = speedtest.Speedtest()
@@ -139,8 +140,6 @@ class InfluxdbSpeedtest():
                  round(results['upload'] / 1000000, 2),
                  results['server']['latency']
                  )
-
-
 
     def write_influx_data(self, json_data):
         """

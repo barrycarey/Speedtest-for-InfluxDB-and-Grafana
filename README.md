@@ -12,13 +12,18 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Delay          |Delay between runs                                                                                                  |
 #### INFLUXDB
-|Key            |Description                                                                                                         |
-|:--------------|:-------------------------------------------------------------------------------------------------------------------|
-|Address        |Delay between updating metrics                                                                                      |
-|Port           |InfluxDB port to connect to.  8086 in most cases                                                                    |
-|Database       |Database to write collected stats to                                                                                |
-|Username       |User that has access to the database                                                                                |
-|Password       |Password for above user                                                                                             |
+| Key         | Description                                                |
+|:------------|:-----------------------------------------------------------|
+| Address     | Delay between updating metrics                             |
+| Port        | InfluxDB port to connect to.  8086 in most cases           |
+| Database    | Database to write collected stats to                       |
+| Username    | User that has access to the database                       |
+| Password    | Password for above user                                    |
+| Retry_Delay | Delay, in seconds, between attempts to connect to InfluxDB |
+| Retry_Count | Number of InfluxDB connection retries to attempt           |
+| Backoff     | Backoff multiplier                                         |
+
+
 #### SPEEDTEST
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|

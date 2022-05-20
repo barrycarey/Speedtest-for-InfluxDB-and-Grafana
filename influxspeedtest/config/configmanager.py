@@ -3,7 +3,7 @@ import os
 import sys
 
 
-class ConfigManager():
+class ConfigManager:
 
     def __init__(self, config):
         print('Loading Configuration File {}'.format(config))
@@ -32,6 +32,9 @@ class ConfigManager():
         self.influx_password = self.config['INFLUXDB'].get('Password', fallback='')
         self.influx_ssl = self.config['INFLUXDB'].getboolean('SSL', fallback=False)
         self.influx_verify_ssl = self.config['INFLUXDB'].getboolean('Verify_SSL', fallback=True)
+        self.influx_retry_delay = self.config['INFLUXDB'].getint('Retry_Delay', 5)
+        self.influx_retry_count = self.config['INFLUXDB'].getint('Retry_Count', 5)
+        self.influx_retry_backoff = self.config['INFLUXDB'].getint('Backoff', 1)
 
         # Logging
         self.logging_level = self.config['LOGGING'].get('Level', fallback='debug')
